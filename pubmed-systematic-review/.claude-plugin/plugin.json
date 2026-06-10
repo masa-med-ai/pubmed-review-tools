@@ -1,0 +1,12 @@
+{
+  "name": "pubmed-systematic-review",
+  "version": "0.1.0",
+  "description": "Systematic PubMed literature search and accurate numeric data extraction (N, outcomes, P-values) into Excel/slides. Bundles a local PubMed MCP server (pubmed_mcp_server2, 10 tools) launched via npx.",
+  "author": {
+    "name": "Masashi Misawa"
+  },
+  "homepage": "https://github.com/masa-med-ai/pubmed-review-tools",
+  "repository": "https://github.com/masa-med-ai/pubmed-review-tools",
+  "license": "MIT",
+  "keywords": ["pubmed", "systematic-review", "literature", "medical", "mesh", "mcp"]
+}
