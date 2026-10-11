@@ -4,19 +4,27 @@
     "name": "Masashi Misawa"
   },
   "metadata": {
-    "description": "PubMed systematic review tools for Claude — a literature-review skill bundled with a local PubMed MCP server.",
-    "version": "0.1.0"
+    "description": "PubMed search tools for Claude — a local PubMed MCP server bundled with search, reference-verification and literature-review skills.",
+    "version": "0.2.0"
   },
   "plugins": [
     {
-      "name": "pubmed-systematic-review",
-      "source": "./pubmed-systematic-review",
-      "description": "Systematic PubMed literature search and accurate data extraction (N, outcomes, P-values) into Excel/slides, bundled with a local PubMed MCP server (10 tools).",
-      "version": "0.1.0",
+      "name": "pubmed",
+      "source": "./pubmed",
+      "description": "PubMed search toolkit: bundled local PubMed MCP server (10 tools) + skills for searching with hyperlinked citations, reference verification, and PubMed-only literature reviews (numeric extraction to Excel/slides).",
+      "version": "0.2.0",
       "author": {
         "name": "Masashi Misawa"
       },
-      "keywords": ["pubmed", "systematic-review", "literature", "medical", "mcp"]
+      "keywords": [
+        "pubmed",
+        "mesh",
+        "literature-search",
+        "citation",
+        "medical",
+        "mcp",
+        "systematic-review"
+      ]
     }
   ]
 }
