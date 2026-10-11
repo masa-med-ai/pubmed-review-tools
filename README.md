@@ -41,7 +41,7 @@ checking a manuscript's references, and collecting numbers from many papers into
 
 | Component | Name | What it does |
 |---|---|---|
-| MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.3, launched with `npx -y pubmed_mcp_server2@2.0.3`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
+| MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.4, launched with `npx -y pubmed_mcp_server2@2.0.4`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
 | Skill | `pubmed-search` | Everyday PubMed searching: builds MeSH + free-text queries, checks hit counts, reads abstracts, and answers with hyperlinked citations. |
 | Skill | `pubmed-reference-verifier` | Checks that in-text citations match the reference list, and verifies each reference against PubMed (existence, authors, year, title, journal, DOI). |
 | Skill | `pubmed-literature-review` | Searches PubMed systematically, screens records, and extracts numbers (N, outcomes, effect sizes, 95% CI, P values) from abstracts or PMC full text into Excel, CSV, or slides. Can also collect meta-analysis input data. |

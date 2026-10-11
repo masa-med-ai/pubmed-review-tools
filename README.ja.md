@@ -43,7 +43,7 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
 
 | 種類 | 名前 | 内容 |
 |---|---|---|
-| MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.3（`npx -y pubmed_mcp_server2@2.0.3` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
+| MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.4（`npx -y pubmed_mcp_server2@2.0.4` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
 | スキル | `pubmed-search` | ふだんの PubMed 検索。MeSH と自由語で検索式を組み、件数を確認し、抄録を読んで、出典リンク付きで答える |
 | スキル | `pubmed-reference-verifier` | 原稿の本文中引用と参考文献リストの対応をチェックし、各文献を PubMed で照合する（実在・著者・年・タイトル・雑誌・DOI） |
 | スキル | `pubmed-literature-review` | PubMed を系統的に検索してスクリーニングし、抄録や PMC 全文から数値（N数・アウトカム・効果量・95%CI・P値）を抜き出して Excel・CSV・スライドにまとめる。メタ解析用データの収集にも対応 |
