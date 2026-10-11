@@ -9,7 +9,7 @@ model: sonnet
 
 ## 手順
 1. 与えられたリサーチクエスチョンを PICO または キーワード群に分解する
-2. PubMed で MeSH を使った検索式を立て、`count` で件数の妥当性を確認してから `search` を実行する（目安: 20〜200件に収まるよう調整）
+2. PubMed で MeSH を使った検索式を立て、`count` で件数の妥当性を確認してから `search` を実行する（目安: 20〜200件に収まるよう調整。これは下調べ用の目安で、網羅的な収集や数値抽出は pubmed-literature-review の役割）
 3. ヒットした文献の抄録を `fetch_batch` でまとめて取得し、関連性でスクリーニングする
 4. 必要に応じて `find_similar_articles` / `get_citation_counts` で補完し、Webで最新情報（ガイドライン・プレプリント）を確認する
 
