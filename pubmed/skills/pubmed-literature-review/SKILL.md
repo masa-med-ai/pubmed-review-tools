@@ -161,10 +161,10 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 `fetch_batch`（`include_abstract: true`）で抄録を5〜10件ずつ取得しながら、`protocol.md` の採否基準に照らして判定する。
 
 - 判定は `include` / `exclude` / `uncertain`。**迷ったら残す**（この段階の目的は明らかな対象外の除外）。
-- **抄録を読まずに除外しない**。タイトルだけで明らかに対象外でも、除外理由は抄録確認後に記録する。
+- **抄録がある記録は、抄録を読まずに除外しない**。タイトルだけで明らかに対象外でも、除外理由は抄録確認後に記録する。
 - 除外は `tiab_exclude_reason` に理由を1つ記録する。理由は `protocol.md` の基準から選ぶ（除外基準への該当だけでなく「採用基準を満たさない: <どの基準か>」も理由にしてよい）。
-- **抄録がない・取得できない記録**: タイトル・出版タイプ・雑誌などから明らかに判定できれば判定し、できなければ `uncertain` とし `flags` に `no_abstract` を付ける。
-  抄録のみモードでは採用に含めず `eligibility=pending`（判定不能）のまま残し、成果物で件数とPMIDを報告する。全文モードでは 2-6 で全文から判定する。
+- **抄録がない・取得できない記録**: `flags` に `no_abstract` を付ける。タイトル・出版タイプ・雑誌などから明らかに対象外（例: レビュー、書籍の章、論説）と判定できる場合だけ除外する。
+  判定できない場合は `uncertain` とし、抄録のみモードでは採用に含めず `eligibility=pending`（判定不能）のまま残して成果物で件数とPMIDを報告する。全文モードでは 2-6 で全文から判定する。
 - `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する。この段階で次のように除外する（モードによらない。`uncertain` より優先）。
   - `Retracted Publication`（撤回された論文そのもの）→ `screen_tiab=exclude`、`tiab_exclude_reason=retracted`
   - `Retraction of Publication` / `Published Erratum`（撤回通知・訂正通知の記録で、研究報告ではない）→ `tiab_exclude_reason=notice`。

@@ -78,7 +78,7 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | Studies included | `eligibility=included` の行の `study_id` のユニーク数 |
 
 抄録のみモードでは全文段階がないため、「Reports sought for retrieval」「Reports not retrieved」は「該当なし（抄録のみで判定）」と書き、
-「Reports assessed for eligibility」は抄録レベルでの件数であると明記する。`uncertain` を `included` に含め、撤回論文は TiAb 段階で除外するため、「Reports excluded (with reasons)」は 0 になる。
+「Reports assessed for eligibility」は抄録レベルでの件数であると明記する。`uncertain` を `included` に含め（`no_abstract` で判定不能のものは `pending`）、撤回論文は TiAb 段階で除外するため、「Reports excluded (with reasons)」は 0 になる。
 
 算術の確認（合わなければ台帳の状態に矛盾がある）:
 
