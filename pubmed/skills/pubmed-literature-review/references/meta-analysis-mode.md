@@ -95,7 +95,7 @@
 まとめ表に加えて、**統合ソフトにそのまま読み込める整形済みデータ**を出力する
 （統合計算は行わず、このデータ作成までで完了）。
 
-- **二値アウトカム**は、Excelの専用シート（または専用CSV）に次の列で「1研究 × アウトカム」につき1行：
+- **二値アウトカム**は、Excelの専用シート（または専用CSV）に次の列で「1研究 × アウトカム × 時点 × 解析集団」につき1行：
   `study_label, study_id, author, year, pmid, outcome_name, timepoint, population, events_int, n_int, events_ctrl, n_ctrl, data_source`
   → R の `meta::metabin()` や RevMan の dichotomous 入力にそのまま対応。
 - **連続アウトカム**は別シートに：
