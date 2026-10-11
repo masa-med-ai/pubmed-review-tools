@@ -96,18 +96,18 @@
 （統合計算は行わず、このデータ作成までで完了）。
 
 - **二値アウトカム**は、Excelの専用シート（または専用CSV）に次の列で「1研究 × アウトカム」につき1行：
-  `study_label, study_id, author, year, pmid, outcome_name, events_int, n_int, events_ctrl, n_ctrl, data_source`
+  `study_label, study_id, author, year, pmid, outcome_name, timepoint, population, events_int, n_int, events_ctrl, n_ctrl, data_source`
   → R の `meta::metabin()` や RevMan の dichotomous 入力にそのまま対応。
 - **連続アウトカム**は別シートに：
-  `study_label, study_id, author, year, pmid, outcome_name, n_int, mean_int, sd_int, n_ctrl, mean_ctrl, sd_ctrl, sd_source`
+  `study_label, study_id, author, year, pmid, outcome_name, timepoint, population, n_int, mean_int, sd_int, n_ctrl, mean_ctrl, sd_ctrl, sd_source`
   → `meta::metacont()` / RevMan の continuous 入力に対応。
 - **効果量フォールバック**は別シートに：
-  `study_label, study_id, author, year, pmid, effect_measure, effect_estimate, ci_lower, ci_upper, effect_source`
+  `study_label, study_id, author, year, pmid, outcome_name, timepoint, population, effect_measure, effect_estimate, ci_lower, ci_upper, effect_source`
   → generic inverse variance（`meta::metagen()`）用。
 - いずれのシートも `study_label` は `Author Year`（例: `Wallace 2022`）で統一し、
   同一著者・同一年が複数ある場合は `2022a / 2022b` で区別する。
   `study_id` は台帳（`ledger.csv`）の研究単位IDで、同一研究の複数報告を統合ソフトで二重に数えないために使う
-  （同じ `study_id` の行が複数あれば、どの報告の値を使うかを決めて1行にする）。
+  （同じ `study_id × outcome_name × timepoint × population` に複数報告の行があれば、事前に決めた基準（例: 主論文を優先、最長追跡を優先）でどれを使うかを決めて1行にし、選んだ理由を残す。アウトカムや時点が違う行は落とさない）。
 - `*_source` 列（data_source / sd_source / effect_source）は必ず残す。
   原文値か派生値かが、メタ解析のリスクオブバイアス／感度分析の判断に直結する。
 - 出力後、ユーザーに一言添える：「これは統合ソフト投入用の整形データです。

@@ -34,12 +34,12 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | `first_author` / `year` / `title` | ツールの返り値から（`search` を compact で取得すれば 2-3 で埋まる） | 2-3 |
 | `flags` | `retracted` / `retraction_notice` / `erratum` など（`;` 区切り） | 2-4 |
 | `screen_tiab` | `pending` / `include` / `exclude` / `uncertain` | 2-4 |
-| `tiab_exclude_reason` | 除外理由（1つ） | 2-4 |
+| `tiab_exclude_reason` | 除外理由（1つ。撤回論文は `retracted`） | 2-4 |
 | `study_id` | 研究単位のID（同一研究の別報告は同じ値） | 2-5 |
 | `ft_status` | `not_sought`（抄録のみモード・TiAb除外）/ `retrieved` / `not_retrieved` | 2-6 |
 | `full_text_source` | `pmc` / `pdf` / `none`（探したが入手できず）/ `n/a`（全文を探していない） | 2-6 |
 | `eligibility` | `pending` / `included` / `excluded` | 2-6（抄録のみモードは 2-4） |
-| `eligibility_exclude_reason` | 適格性判定での除外理由（1つ。全文判定での除外、撤回論文の `retracted` など。モードによらずこの列を使う） | 2-4 / 2-6 |
+| `eligibility_exclude_reason` | 全文での適格性判定の除外理由（1つ） | 2-6 |
 | `extraction_status` | `pending` / `extracted` / `verified` / `n/a`（採用されなかった行） | Phase 3 / 4 |
 | `extracted_batch` | 抽出したバッチ番号 | Phase 3 |
 | `notes` | 「適格性不確実」、曖昧さなど | 任意 |
@@ -76,16 +76,16 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | Studies included | `eligibility=included` の行の `study_id` のユニーク数 |
 
 抄録のみモードでは全文段階がないため、「Reports sought for retrieval」「Reports not retrieved」は「該当なし（抄録のみで判定）」と書き、
-「Reports assessed for eligibility」は抄録レベルでの件数であると明記する。`uncertain` を `included` に含めるため、「Reports excluded (with reasons)」は撤回論文などの除外に限られる。
+「Reports assessed for eligibility」は抄録レベルでの件数であると明記する。`uncertain` を `included` に含め、撤回論文は TiAb 段階で除外するため、「Reports excluded (with reasons)」は 0 になる。
 
 算術の確認（合わなければ台帳の状態に矛盾がある）:
 
 - 両モード共通: `Records screened − Records excluded = (screen_tiab が include または uncertain の件数)`、
   `Reports included + Reports excluded + (eligibility=pending の件数) = Records screened − Records excluded`
 - 全文モード: `Reports sought − Reports not retrieved = Reports assessed`、`Reports assessed − Reports excluded = Reports included`
-- 抄録のみモード: `Reports assessed（抄録レベル） − Reports excluded = Reports included`（除外は撤回論文などに限られる）
+- 抄録のみモード: `Reports assessed（抄録レベル） = Reports included`（Reports excluded は 0）
 
-撤回フラグ付きの論文は `eligibility_exclude_reason=retracted` で除外し、その件数を「Reports excluded」の理由内訳に示す。
+撤回論文は TiAb 段階で `tiab_exclude_reason=retracted` として除外するので、「Records excluded」の理由内訳に `retracted` として示す。
 
 ## 5. 照合ゲートの実装例
 
@@ -97,22 +97,27 @@ ledger = list(csv.DictReader(open("ledger.csv", encoding="utf-8")))
 data = list(csv.DictReader(open("data.csv", encoding="utf-8")))
 
 included = {r["pmid"] for r in ledger if r["eligibility"] == "included"}
-included_studies = {r["study_id"] for r in ledger if r["eligibility"] == "included"}
 data_pmids = {r["pmid"] for r in data}
 keys = Counter((r["pmid"], r["outcome_name"], r["timepoint"], r["population"]) for r in data)
 
 missing = sorted(included - data_pmids)                     # (a) 抽出漏れ
 extra = sorted(data_pmids - included)                       # (b) 除外したはずの PMID
 dup_keys = [k for k, n in keys.items() if n > 1]            # (c) キー重複
-studies_without_data = sorted(
-    included_studies - {r["study_id"] for r in data}
-)                                                           # (d) 抽出のない研究
+ledger_study = {r["pmid"]: r["study_id"] for r in ledger}
+wrong_study = sorted({r["pmid"] for r in data
+                      if r["study_id"] != ledger_study.get(r["pmid"])})  # (d) study_id の対応違い
+
+prespecified = {"ADR", "AMR"}   # protocol.md で指定したアウトカム名に置き換える
+have = {(r["pmid"], r["outcome_name"]) for r in data}
+missing_outcomes = sorted((p, o) for p in included for o in prespecified
+                          if (p, o) not in have)            # (e) 指定アウトカムの行がない
 
 print("missing:", missing)
 print("extra:", extra)
 print("duplicate keys:", dup_keys)
-print("studies without data:", studies_without_data)
-assert not (missing or extra or dup_keys or studies_without_data), "照合ゲート不通過"
+print("wrong study_id:", wrong_study)
+print("missing outcomes:", missing_outcomes)
+assert not (missing or extra or dup_keys or wrong_study or missing_outcomes), "照合ゲート不通過"
 ```
 
 ゲートを通過したら、`included` の全 PMID の `extraction_status` が `extracted` 以上になっていることも確認する。

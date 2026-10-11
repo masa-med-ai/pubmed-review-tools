@@ -140,9 +140,11 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 1. `sort` を固定する（`pub_date` 推奨）。`retmax` は最大500。`output_mode: "compact"` で取得すると、台帳の著者・年・タイトルもここで埋められる。
 2. `retstart` を `retmax` ずつ進め、**返ってきた件数が `retmax` 未満になるまで**取得を続ける（最初の `total` から必要ページ数を決め打ちしない）。
 3. 各ページの PMID を `search_pages.csv` に追記する（クエリID・取得日時・retstart・PMIDリスト。ツールは時刻を返さないので取得日時はローカル時刻でよい）。
-4. 取得後にもう一度 `count` する。**総件数が増えていたら全ページを取り直して和集合をとる**。
-5. 重複を除いたユニーク PMID 数が最終の `count` と一致することを確認する。**ユニーク数が `count` より少なければ、全ページを取り直して和集合をとる**
-   （ページング中に出版日が更新された論文が、取得済みのページへ移って漏れることがあるため）。それでも合わなければ、差分の件数と再取得の経過を `protocol.md` に記録してユーザーに報告する。
+4. **全ページをもう一度取得し直し（2回目の全走査）、1回目と PMID 集合が一致するか確認する。** 一致しなければ和集合をとり、
+   集合が変わらなくなるまで全走査を繰り返す（最大3回）。ページング中の新規追加や出版日の更新で順位がずれると、
+   件数が合っていても別の論文が漏れることがあるため、件数ではなく集合の安定で確認する。
+5. 最後に `count` し、ユニーク PMID 数と一致することを確認する。合わなければ差分の件数と全走査の経過を `protocol.md` に記録してユーザーに報告する。
+   WebEnv なしでは取得の完全性を保証できないため、成果物の限界にもその旨を書く。
 6. 件数が 9,999 件を超える場合、E-utilities はそれ以上 `retstart` を進められない。`[dp]` の期間で相互に重ならない区間へ分割し、区間ごとに取得して和集合をとる。
 
 ### 2-2. 複数の検索式を使う場合
@@ -160,7 +162,7 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 - 判定は `include` / `exclude` / `uncertain`。**迷ったら残す**（この段階の目的は明らかな対象外の除外）。
 - **抄録を読まずに除外しない**。タイトルだけで明らかに対象外でも、除外理由は抄録確認後に記録する。
 - 除外は `tiab_exclude_reason` に理由を1つ記録する。
-- `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する。撤回論文は原則採用せず、`eligibility=excluded`、`eligibility_exclude_reason=retracted` とする（モードによらない）。
+- `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する。撤回論文（`Retracted Publication`）は**この段階で** `screen_tiab=exclude`、`tiab_exclude_reason=retracted` として除外する（モードによらない。`uncertain` より優先）。
   撤回・訂正の検出は出版タイプだけに依存しており、撤回通知との相互リンクまでは確認できないことを限界として扱う。
 - `uncertain` の扱い: 全文モードでは 2-6 の全文判定へ進める。抄録のみモードでは採用候補として残し、`notes` に「適格性不確実」と書いて成果物で区別する。**`uncertain` を除外で片付けない**。
 
@@ -199,6 +201,7 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 ### 抽出フィールド（data.csv）
 
 1行は「論文 × アウトカム × 時点 × 解析集団」。キー `(pmid, outcome_name, timepoint, population)` は重複させない。
+`protocol.md` で指定したアウトカムが論文に報告されていなければ、値を `NR` とした行を作る（行がないと「抽出漏れ」と区別できない）。
 
 | フィールド | 説明・注意点 |
 |---|---|
@@ -242,7 +245,8 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 - [ ] (a) `eligibility=included` の全 PMID が `data.csv` に1行以上ある
 - [ ] (b) `data.csv` の全 PMID が included の集合に含まれる（除外したはずの PMID が紛れていない）
 - [ ] (c) `data.csv` のキー `(pmid, outcome_name, timepoint, population)` が重複していない
-- [ ] (d) included の全 `study_id` に、抽出済みの報告が1件以上ある
+- [ ] (d) `data.csv` の各行の `study_id` が、台帳でその PMID に付けた `study_id` と一致する
+- [ ] (e) included の各 PMID に、`protocol.md` で事前に指定したアウトカムがすべて行としてある（報告がなければ値を `NR` とした行を作る）
 
 一致しなければ、不足・余剰の PMID を列挙して処理し直し、再度ゲートを通す。
 
@@ -257,12 +261,12 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 - [ ] 介入（デバイス・薬剤など）の名称は原文の表記どおりか
 
 モードBの追加チェックは `references/meta-analysis-mode.md` の「3. Phase 4 追加チェック」を参照。
-怪しい論文は `fetch` で1件ずつ再取得して照合する。
+怪しい論文は `source_location` に応じて再取得して照合する（抄録由来なら `fetch`、PMC全文由来なら `get_full_text`、PDF由来ならユーザー提供のPDF）。
 
 ### 4-2. 再照合（任意・推奨）
 
 件数が多い、または学会・論文用の場合、4-1 の後にサブエージェントを1つ起動し、次に該当する論文だけを
-`fetch` で再取得して原文と照合させ、食い違いだけを報告させる。メインは食い違った箇所を自分で原文確認して修正する。
+`source_location` に応じて（抄録は `fetch`、PMC全文は `get_full_text`、PDFは提供ファイル）再取得して原文と照合させ、食い違いだけを報告させる。メインは食い違った箇所を自分で原文確認して修正する。
 
 - N が他論文と桁違いに大きい/小さい
 - P値が 0.05 付近
@@ -335,7 +339,7 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 [Phase 2] 全ページ取得（件数照合）→ 台帳 → TiAbスクリーニング（撤回確認）
           → 同一研究の束ね → （全文モード）全文判定 → PRISMA件数         … メイン
 [Phase 3] fetch_batch 5〜6件ずつ → 逐語的に抽出 → data.csv 追記・進捗表示  … メイン（並列化しない）
-[Phase 4] 照合ゲート（集合で4項目）→ 自己検証 →（任意）再照合              … メイン＋サブ
+[Phase 4] 照合ゲート（集合とID対応の5項目）→ 自己検証 →（任意）再照合              … メイン＋サブ
 [Phase 5] Excel / PPTX / CSV 出力（PRISMA件数・限界・方針を同梱）          … メイン or サブ
 ```
 
