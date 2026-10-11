@@ -7,7 +7,7 @@ It bundles a local PubMed MCP server with skills for searching PubMed with hyper
 checking a manuscript's references, and collecting numbers from many papers into tables
 (a PubMed-only, systematic-review-style workflow).
 
-- The MCP server runs **on your computer** and talks to NCBI directly. Your queries do not pass through any third-party server.
+- The MCP server runs **on your computer** and talks to NCBI directly. Its requests don't pass through any server run by the plugin author.
 - No manual server installation: Claude Code starts it with `npx` when the plugin is enabled.
 
 > This is a research-support tool. Always check important numbers and citations against the original papers.
@@ -225,8 +225,8 @@ Authors, journal, year, and PMID always come from the tool results, never from m
 
 ## Privacy and data flow
 
-- The MCP server runs locally over stdio. Requests go **directly from your computer** to NCBI E-utilities, PubMed Central, and iCite (NIH).
-- Queries are not sent to the plugin author or to any other third party.
+- The MCP server runs locally over stdio. Its API requests go **directly from your computer** to NCBI E-utilities, PubMed Central, and iCite (NIH). They are not sent to the plugin author or to any other service.
+- This covers the MCP server only. Your conversation with Claude, including the search results Claude reads, is processed by Claude as usual under Anthropic's terms ([data usage](https://code.claude.com/docs/en/data-usage)). The `literature-scout` agent may also use Claude's web search.
 - Your `NCBI_API_KEY` stays in your environment. It is sent only to NCBI.
 - NCBI's [usage policies](https://www.ncbi.nlm.nih.gov/home/about/policies/) apply.
 
@@ -235,7 +235,7 @@ Authors, journal, year, and PMID always come from the tool results, never from m
 - **PubMed only.** Embase, CENTRAL, Web of Science, Scopus, and trial registries are not searched.
 - **Full text** is available only for articles in PubMed Central. For other articles, use abstracts or provide PDFs yourself.
 - **Abstracts can disagree with full texts.** Check important numbers against the full paper.
-- **Long author lists** (more than 30 authors) are returned as the first 10 names plus "et al.".
+- **Long author lists** (more than 30 authors) are returned as the first 10 names plus "et al." by `fetch`, `fetch_batch`, `search` in full mode, and `batch_process`. Search results in the default compact mode show the first author plus "et al.".
 - **Publication-type tags** in PubMed depend on indexing and can be missing for recent papers. The skills combine them with free-text terms.
 - **No search snapshot (WebEnv).** Very large result sets can shift while being paged. The literature-review skill reads every page twice to detect this, but can't guarantee completeness.
 - **AI double-checking is not independent human review.** The literature-review skill can re-check suspicious numbers with a second agent. That is not equivalent to two independent reviewers.
@@ -248,7 +248,13 @@ Update to the latest version:
 /plugin marketplace update pubmed-review-tools
 ```
 
-Then restart Claude Code.
+Then update the installed plugin, either from the **Installed** tab of `/plugin` ("Update now"), or from your terminal:
+
+```bash
+claude plugin update pubmed@pubmed-review-tools
+```
+
+Restart Claude Code afterwards.
 
 Uninstall:
 
