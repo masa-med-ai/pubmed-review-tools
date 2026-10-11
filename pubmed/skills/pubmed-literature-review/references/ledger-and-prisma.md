@@ -39,7 +39,7 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | `ft_status` | `not_sought`（抄録のみモード・TiAb除外）/ `retrieved` / `not_retrieved` | 2-6 |
 | `full_text_source` | `pmc` / `pdf` / `none`（探したが入手できず）/ `n/a`（全文を探していない） | 2-6 |
 | `eligibility` | `pending` / `included` / `excluded` | 2-6（抄録のみモードは 2-4） |
-| `ft_exclude_reason` | 全文での除外理由（1つ） | 2-6 |
+| `eligibility_exclude_reason` | 適格性判定での除外理由（1つ。全文判定での除外、撤回論文の `retracted` など。モードによらずこの列を使う） | 2-4 / 2-6 |
 | `extraction_status` | `pending` / `extracted` / `verified` / `n/a`（採用されなかった行） | Phase 3 / 4 |
 | `extracted_batch` | 抽出したバッチ番号 | Phase 3 |
 | `notes` | 「適格性不確実」、曖昧さなど | 任意 |
@@ -64,28 +64,28 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 
 | PRISMA 2020 の項目 | 計算 |
 |---|---|
-| Records identified (PubMed) | 全検索式の PMID の延べ件数（重複排除前） |
-| Duplicate records removed | 延べ件数 − ユニーク PMID 数 |
+| Records identified (PubMed) | 検索式ごとのユニーク PMID 数の合計（ページングの取り直しで生じた同一検索式内の重複は数えない） |
+| Duplicate records removed | Records identified − 全体のユニーク PMID 数（複数の検索式にまたがる重複） |
 | Records screened | ユニーク PMID 数（= ledger の行数） |
 | Records excluded | `screen_tiab=exclude` の件数（理由別の内訳も） |
 | Reports sought for retrieval | （全文モード）`screen_tiab` が `include` または `uncertain` の件数 |
 | Reports not retrieved | `ft_status=not_retrieved` の件数 |
 | Reports assessed for eligibility | 全文モード: `ft_status=retrieved` の件数 ／ 抄録のみモード: 「抄録レベルで判定」として `screen_tiab` が `include` または `uncertain` の件数 |
-| Reports excluded (with reasons) | `eligibility=excluded` かつ `screen_tiab≠exclude` の件数（`ft_exclude_reason` 別の内訳） |
+| Reports excluded (with reasons) | `eligibility=excluded` かつ `screen_tiab≠exclude` の件数（`eligibility_exclude_reason` 別の内訳） |
 | Reports included | `eligibility=included` の件数 |
 | Studies included | `eligibility=included` の行の `study_id` のユニーク数 |
 
 抄録のみモードでは全文段階がないため、「Reports sought for retrieval」「Reports not retrieved」は「該当なし（抄録のみで判定）」と書き、
-「Reports assessed for eligibility」は抄録レベルでの件数であると明記する。`uncertain` を `included` に含めるため、通常「Reports excluded (with reasons)」は 0 になる。
+「Reports assessed for eligibility」は抄録レベルでの件数であると明記する。`uncertain` を `included` に含めるため、「Reports excluded (with reasons)」は撤回論文などの除外に限られる。
 
 算術の確認（合わなければ台帳の状態に矛盾がある）:
 
 - 両モード共通: `Records screened − Records excluded = (screen_tiab が include または uncertain の件数)`、
   `Reports included + Reports excluded + (eligibility=pending の件数) = Records screened − Records excluded`
 - 全文モード: `Reports sought − Reports not retrieved = Reports assessed`、`Reports assessed − Reports excluded = Reports included`
-- 抄録のみモード: `Reports assessed（抄録レベル） = Reports included`（除外理由付きの除外がない場合）
+- 抄録のみモード: `Reports assessed（抄録レベル） − Reports excluded = Reports included`（除外は撤回論文などに限られる）
 
-撤回フラグ付きの論文を除外した場合は、その件数を「Reports excluded」の理由内訳に `retracted` として示す。
+撤回フラグ付きの論文は `eligibility_exclude_reason=retracted` で除外し、その件数を「Reports excluded」の理由内訳に示す。
 
 ## 5. 照合ゲートの実装例
 

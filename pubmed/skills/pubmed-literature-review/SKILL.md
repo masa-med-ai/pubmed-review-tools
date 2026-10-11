@@ -141,7 +141,8 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 2. `retstart` を `retmax` ずつ進め、**返ってきた件数が `retmax` 未満になるまで**取得を続ける（最初の `total` から必要ページ数を決め打ちしない）。
 3. 各ページの PMID を `search_pages.csv` に追記する（クエリID・取得日時・retstart・PMIDリスト。ツールは時刻を返さないので取得日時はローカル時刻でよい）。
 4. 取得後にもう一度 `count` する。**総件数が増えていたら全ページを取り直して和集合をとる**。
-5. 重複を除いたユニーク PMID 数が最終の `count` と一致することを確認する。一致しない理由を説明できないまま先へ進まない。
+5. 重複を除いたユニーク PMID 数が最終の `count` と一致することを確認する。**ユニーク数が `count` より少なければ、全ページを取り直して和集合をとる**
+   （ページング中に出版日が更新された論文が、取得済みのページへ移って漏れることがあるため）。それでも合わなければ、差分の件数と再取得の経過を `protocol.md` に記録してユーザーに報告する。
 6. 件数が 9,999 件を超える場合、E-utilities はそれ以上 `retstart` を進められない。`[dp]` の期間で相互に重ならない区間へ分割し、区間ごとに取得して和集合をとる。
 
 ### 2-2. 複数の検索式を使う場合
@@ -159,7 +160,7 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 - 判定は `include` / `exclude` / `uncertain`。**迷ったら残す**（この段階の目的は明らかな対象外の除外）。
 - **抄録を読まずに除外しない**。タイトルだけで明らかに対象外でも、除外理由は抄録確認後に記録する。
 - 除外は `tiab_exclude_reason` に理由を1つ記録する。
-- `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する（撤回論文は原則採用しない）。
+- `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する。撤回論文は原則採用せず、`eligibility=excluded`、`eligibility_exclude_reason=retracted` とする（モードによらない）。
   撤回・訂正の検出は出版タイプだけに依存しており、撤回通知との相互リンクまでは確認できないことを限界として扱う。
 - `uncertain` の扱い: 全文モードでは 2-6 の全文判定へ進める。抄録のみモードでは採用候補として残し、`notes` に「適格性不確実」と書いて成果物で区別する。**`uncertain` を除外で片付けない**。
 
@@ -173,7 +174,7 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 
 `include` と `uncertain` について全文を探す：`convert_ids` で PMCID を得て `get_full_text`、なければユーザーに PDF を依頼する。
 入手経路を `full_text_source`（pmc / pdf / none）に記録し、入手できなければ `ft_status=not_retrieved` とする（推測で埋めない）。
-全文で判定し、`eligibility` を `included` / `excluded`（理由を `ft_exclude_reason`）に確定する。
+全文で判定し、`eligibility` を `included` / `excluded`（理由を `eligibility_exclude_reason`）に確定する。
 抄録のみモードでは、2-4 の判定をもって `eligibility` を確定する。
 
 ### 2-7. PRISMA の件数を報告する
