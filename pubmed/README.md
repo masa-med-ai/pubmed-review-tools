@@ -6,7 +6,7 @@ PubMed MCP サーバーと、検索・引用照合・文献レビュー用のス
 ## 含まれるもの
 
 - **MCP サーバー `pubmed`**: [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2)
-  （npm 公開）を `npx -y pubmed_mcp_server2@2.0.2` で stdio 起動。10ツール
+  （npm 公開）を `npx -y pubmed_mcp_server2@2.0.3` で stdio 起動。10ツール
   （`search` / `fetch` / `fetch_batch` / `get_full_text` / `count` /
   `find_similar_articles` / `export_to_ris` / `get_citation_counts` /
   `convert_ids` / `batch_process`）を提供。PubMed へはお使いの PC から直接アクセスします。

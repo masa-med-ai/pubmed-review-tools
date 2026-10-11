@@ -21,7 +21,7 @@ PubMed 検索・引用照合・文献レビューのスキルを束ねたプラ�
 インストール後に Claude Code を再起動し、`/mcp` で `pubmed` が connected になっていれば完了です。
 
 有効化後、PubMed の10ツールと検索ワークフローがセットで使えるようになります。
-MCP サーバーは `npx -y pubmed_mcp_server2@2.0.2` で自動起動するため、手動インストールは不要です（**Node.js 18 以上が必要**）。
+MCP サーバーは `npx -y pubmed_mcp_server2@2.0.3` で自動起動するため、手動インストールは不要です（**Node.js 18 以上が必要**）。
 
 ## NCBI APIキー（任意・推奨）
 
