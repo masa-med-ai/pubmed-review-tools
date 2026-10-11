@@ -20,6 +20,7 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | 列 | 内容 |
 |---|---|
 | `query_id` | 検索式のID（q1, q2 …。式そのものは protocol.md に記録） |
+| `scan` | 全走査の回数（1, 2, …。2-1 の集合比較に使う） |
 | `run_at` | 取得日時 |
 | `sort` / `retstart` / `retmax` | そのページの取得条件 |
 | `total_reported` | そのページの応答が返した総件数 |
@@ -32,9 +33,9 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | `pmid` | PubMed ID | 2-3 |
 | `source_query` | 由来の query_id（複数なら `;` 区切り） | 2-2 / 2-3 |
 | `first_author` / `year` / `title` | ツールの返り値から（`search` を compact で取得すれば 2-3 で埋まる） | 2-3 |
-| `flags` | `retracted` / `retraction_notice` / `erratum` など（`;` 区切り） | 2-4 |
+| `flags` | `retracted` / `retraction_notice` / `erratum` / `no_abstract` など（`;` 区切り） | 2-4 |
 | `screen_tiab` | `pending` / `include` / `exclude` / `uncertain` | 2-4 |
-| `tiab_exclude_reason` | 除外理由（1つ。撤回論文は `retracted`） | 2-4 |
+| `tiab_exclude_reason` | 除外理由（1つ。撤回論文は `retracted`、撤回・訂正通知は `notice`） | 2-4 |
 | `study_id` | 研究単位のID（同一研究の別報告は同じ値） | 2-5 |
 | `ft_status` | `not_sought`（抄録のみモード・TiAb除外）/ `retrieved` / `not_retrieved` | 2-6 |
 | `full_text_source` | `pmc` / `pdf` / `none`（探したが入手できず）/ `n/a`（全文を探していない） | 2-6 |
@@ -49,6 +50,7 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 - **採否（`screen_tiab` / `eligibility`）と抽出状況（`extraction_status`）は別の列で管理する。** 抽出が進んでも `eligibility` は変わらない。
 - `screen_tiab=exclude` の行は `eligibility=excluded`、`ft_status=not_sought` とする（除外理由は `tiab_exclude_reason` 側）。
 - 抄録のみモードでは `ft_status=not_sought`、`full_text_source=n/a` のまま、2-4 の判定で `eligibility` を確定する。`uncertain` は `included` とし、`notes` に「適格性不確実」と書く。
+  ただし `no_abstract` で判定できない記録は `eligibility=pending`（判定不能）のまま残す。
 - 全文モードでは、`include` / `uncertain` の行だけ全文を探す。`not_retrieved` の行は `eligibility=pending` のまま残し、成果物で「全文未入手」として報告する（採否を推測しない）。
 - `study_id` は既定で `pmid` と同じ値を入れ、同一研究と判明したら代表報告の値に揃える。
 
@@ -83,7 +85,7 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 - 両モード共通: `Records screened − Records excluded = (screen_tiab が include または uncertain の件数)`、
   `Reports included + Reports excluded + (eligibility=pending の件数) = Records screened − Records excluded`
 - 全文モード: `Reports sought − Reports not retrieved = Reports assessed`、`Reports assessed − Reports excluded = Reports included`
-- 抄録のみモード: `Reports assessed（抄録レベル） = Reports included`（Reports excluded は 0）
+- 抄録のみモード: `Reports assessed（抄録レベル） = Reports included + (eligibility=pending の件数)`（Reports excluded は 0。pending は抄録がなく判定できなかった記録）
 
 撤回論文は TiAb 段階で `tiab_exclude_reason=retracted` として除外するので、「Records excluded」の理由内訳に `retracted` として示す。
 

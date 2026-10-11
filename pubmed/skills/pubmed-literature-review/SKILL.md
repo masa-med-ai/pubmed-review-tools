@@ -162,10 +162,15 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 
 - 判定は `include` / `exclude` / `uncertain`。**迷ったら残す**（この段階の目的は明らかな対象外の除外）。
 - **抄録を読まずに除外しない**。タイトルだけで明らかに対象外でも、除外理由は抄録確認後に記録する。
-- 除外は `tiab_exclude_reason` に理由を1つ記録する。
-- `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する。撤回論文（`Retracted Publication`）は**この段階で** `screen_tiab=exclude`、`tiab_exclude_reason=retracted` として除外する（モードによらない。`uncertain` より優先）。
+- 除外は `tiab_exclude_reason` に理由を1つ記録する。理由は `protocol.md` の基準から選ぶ（除外基準への該当だけでなく「採用基準を満たさない: <どの基準か>」も理由にしてよい）。
+- **抄録がない・取得できない記録**: タイトル・出版タイプ・雑誌などから明らかに判定できれば判定し、できなければ `uncertain` とし `flags` に `no_abstract` を付ける。
+  抄録のみモードでは採用に含めず `eligibility=pending`（判定不能）のまま残し、成果物で件数とPMIDを報告する。全文モードでは 2-6 で全文から判定する。
+- `publication_types` に `Retracted Publication` / `Retraction of Publication` / `Published Erratum` を含む要素があれば `flags` に記録し、ユーザーに報告する。この段階で次のように除外する（モードによらない。`uncertain` より優先）。
+  - `Retracted Publication`（撤回された論文そのもの）→ `screen_tiab=exclude`、`tiab_exclude_reason=retracted`
+  - `Retraction of Publication` / `Published Erratum`（撤回通知・訂正通知の記録で、研究報告ではない）→ `tiab_exclude_reason=notice`。
+    元論文が採用候補にあれば、その行の `notes` に「訂正あり/撤回通知あり」と書き、訂正後の値を使う。
   撤回・訂正の検出は出版タイプだけに依存しており、撤回通知との相互リンクまでは確認できないことを限界として扱う。
-- `uncertain` の扱い: 全文モードでは 2-6 の全文判定へ進める。抄録のみモードでは採用候補として残し、`notes` に「適格性不確実」と書いて成果物で区別する。**`uncertain` を除外で片付けない**。
+- `uncertain` の扱い: 全文モードでは 2-6 の全文判定へ進める。抄録のみモードでは採用候補として残し（`no_abstract` を除く）、`notes` に「適格性不確実」と書いて成果物で区別する。**`uncertain` を除外で片付けない**。
 
 ### 2-5. 同一研究の複数報告をまとめる
 
@@ -203,6 +208,7 @@ MCP の `search` は検索結果のスナップショット（WebEnv）を返さ
 
 1行は「論文 × アウトカム × 時点 × 解析集団」。キー `(pmid, outcome_name, timepoint, population)` は重複させない。
 `protocol.md` で指定したアウトカムが論文に報告されていなければ、値を `NR` とした行を作る（行がないと「抽出漏れ」と区別できない）。
+`outcome_name` と `timepoint` は `protocol.md` に書いた表記をそのまま使う（表記ゆれがあると照合ゲートで一致を確認できない）。
 
 | フィールド | 説明・注意点 |
 |---|---|
