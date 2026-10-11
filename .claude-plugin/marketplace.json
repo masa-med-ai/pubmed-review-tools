@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "PubMed search tools for Claude — a local PubMed MCP server bundled with search, reference-verification and literature-review skills.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "pubmed",
       "source": "./pubmed",
       "description": "PubMed search toolkit: bundled local PubMed MCP server (10 tools) + skills for searching with hyperlinked citations, reference verification, and PubMed-only literature reviews (numeric extraction to Excel/slides).",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "Masashi Misawa"
       },

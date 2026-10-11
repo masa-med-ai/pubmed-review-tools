@@ -1,6 +1,6 @@
 {
   "name": "pubmed",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "PubMed search toolkit for Claude: a bundled local PubMed MCP server (pubmed_mcp_server2, 10 tools) plus skills for efficient searching with hyperlinked citations, reference verification, and PubMed-only literature reviews with accurate numeric extraction.",
   "author": {
     "name": "Masashi Misawa"
@@ -8,5 +8,13 @@
   "homepage": "https://github.com/masa-med-ai/pubmed-review-tools",
   "repository": "https://github.com/masa-med-ai/pubmed-review-tools",
   "license": "MIT",
-  "keywords": ["pubmed", "mesh", "literature-search", "citation", "medical", "mcp", "systematic-review"]
+  "keywords": [
+    "pubmed",
+    "mesh",
+    "literature-search",
+    "citation",
+    "medical",
+    "mcp",
+    "systematic-review"
+  ]
 }
