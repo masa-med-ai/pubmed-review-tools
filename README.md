@@ -49,6 +49,16 @@ checking a manuscript's references, and collecting numbers from many papers into
 
 Skills are used automatically when your request matches them. You can also call them explicitly, for example `/pubmed:pubmed-search`.
 
+### Optional: `unpaywall` plugin
+
+The same marketplace also lists [`unpaywall`](https://github.com/masa-med-ai/unpaywall-skill), a separate plugin that looks up legal open-access copies by DOI and can save the PDF. When it is installed, `pubmed-literature-review` can use it for papers that are not in PMC.
+
+```
+/plugin install unpaywall@pubmed-review-tools
+```
+
+It needs Python 3.8+ and your own email address in `UNPAYWALL_EMAIL`. If you copied the skill to `~/.claude/skills/unpaywall`, delete that copy so two similar skills don't compete.
+
 ## Requirements
 
 - **Claude Code** (the one-line install command below needs 2.1.275 or later)
@@ -166,7 +176,7 @@ How it works:
 
 1. **Settings.** Claude first asks two questions:
    - Is this a summary table only, or do you also need meta-analysis input data (2x2 tables, mean/SD/N, effect sizes with 95% CI)?
-   - Should it use abstracts only, or full text as well? Full text is used for PMC articles and for PDFs you provide.
+   - Should it use abstracts only, or full text as well? Full text is used for PMC articles and for PDFs you provide. With the `unpaywall` plugin, it can also look for open-access copies.
 2. **Protocol.** It writes the question (PICO), the inclusion and exclusion criteria, and the outcomes to `protocol.md`, and asks you to confirm.
 3. **Search.** It builds and calibrates the query, then fetches all PMIDs. It reads every page twice and checks that the set of PMIDs is the same both times, so nothing is missed.
 4. **Screening.** It screens each record on title and abstract (include / exclude / uncertain, with a reason for each exclusion). Retracted papers are excluded, and reports of the same study are linked together. In full-text mode it then judges eligibility on the full text.
@@ -229,11 +239,12 @@ Authors, journal, year, and PMID always come from the tool results, never from m
 - This covers the MCP server only. Your conversation with Claude, including the search results Claude reads, is processed by Claude as usual under Anthropic's terms ([data usage](https://code.claude.com/docs/en/data-usage)). The `literature-scout` agent may also use Claude's web search.
 - Your `NCBI_API_KEY` stays in your environment. It is sent only to NCBI.
 - NCBI's [usage policies](https://www.ncbi.nlm.nih.gov/home/about/policies/) apply.
+- The optional `unpaywall` plugin is separate from the MCP server. If you install and use it, the DOI and your `UNPAYWALL_EMAIL` go to Unpaywall, and saving a PDF connects to the publisher or repository that Unpaywall returns.
 
 ## Limitations
 
 - **PubMed only.** Embase, CENTRAL, Web of Science, Scopus, and trial registries are not searched.
-- **Full text** is available only for articles in PubMed Central. For other articles, use abstracts or provide PDFs yourself.
+- **Full text** is available only for articles in PubMed Central. For other articles, use abstracts or provide PDFs yourself. The optional `unpaywall` plugin can find open-access copies, but many publishers block automatic downloads, and a saved copy may be an accepted manuscript or a preprint rather than the published version.
 - **Abstracts can disagree with full texts.** Check important numbers against the full paper.
 - **Long author lists** (more than 30 authors) are returned as the first 10 names plus "et al." by `fetch`, `fetch_batch`, `search` in full mode, and `batch_process`. Search results in the default compact mode show the first author plus "et al.".
 - **Publication-type tags** in PubMed depend on indexing and can be missing for recent papers. The skills combine them with free-text terms.

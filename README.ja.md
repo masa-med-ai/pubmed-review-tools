@@ -51,6 +51,16 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
 
 スキルは、依頼内容に合えば自動で使われます。`/pubmed:pubmed-search` のように明示的に呼び出すこともできます。
 
+### 任意：`unpaywall` プラグイン
+
+同じ marketplace には、DOI から合法的なオープンアクセス版を探し、PDF も保存できる別プラグイン [`unpaywall`](https://github.com/masa-med-ai/unpaywall-skill) もあります。入れておくと、`pubmed-literature-review` が PMC にない論文で使えます。
+
+```
+/plugin install unpaywall@pubmed-review-tools
+```
+
+Python 3.8 以上と、`UNPAYWALL_EMAIL` に設定した本人のメールアドレスが必要です。スキルを `~/.claude/skills/unpaywall` にコピーしている場合は、似たスキルが2つ反応しないよう、そのコピーを削除してください。
+
 ## 動作環境
 
 - **Claude Code**（後述の1行インストールは 2.1.275 以降）
@@ -172,7 +182,7 @@ Vancouver 形式（`[1]`、`[1-3]`）、Pandoc 形式（`[@key]`）、本文に�
 
 1. **方針の確認**：最初に2つのことを質問します。
    - まとめ表だけでよいか、メタ解析用のデータ（2x2表、mean/SD/N、効果量と95%CI）も集めるか
-   - 抄録だけを使うか、全文も使うか（全文は PMC 収録の論文と、ユーザーが渡す PDF に限られます）
+   - 抄録だけを使うか、全文も使うか（全文は PMC 収録の論文と、ユーザーが渡す PDF に限られます。`unpaywall` プラグインがあれば、OA 版も探せます）
 2. **プロトコル**：問い（PICO）、採用・除外基準、アウトカムを `protocol.md` に書き、確認を求めます。
 3. **検索**：検索式を作って調整し、全件の PMID を取得します。全ページを2回取得し、PMID の集合が一致することを確認して、取りこぼしがないことを確かめます。
 4. **スクリーニング**：
@@ -249,11 +259,12 @@ Claude が回答に論文を使うときは、第一著者・雑誌名・発刊�
 - これは MCP サーバーの通信についての説明です。Claude との会話（Claude が読む検索結果を含む）は、通常どおり Anthropic の規約のもとで Claude が処理します（[データの取り扱い](https://code.claude.com/docs/en/data-usage)）。また `literature-scout` エージェントは Claude の Web 検索を使うことがあります。
 - `NCBI_API_KEY` はお使いの環境に置かれ、送信先は NCBI だけです。
 - NCBI の[利用規約](https://www.ncbi.nlm.nih.gov/home/about/policies/)が適用されます。
+- 任意の `unpaywall` プラグインは MCP サーバーとは別のものです。入れて使うと、DOI と `UNPAYWALL_EMAIL` のメールアドレスが Unpaywall に送られ、PDF を保存するときは Unpaywall が返した出版社やリポジトリへ接続します。
 
 ## 制限事項
 
 - **PubMed のみ**：Embase、CENTRAL、Web of Science、Scopus、試験登録は検索しません。
-- **全文**は PubMed Central 収録の論文だけです。それ以外は抄録を使うか、PDF を渡してください。
+- **全文**は PubMed Central 収録の論文だけです。それ以外は抄録を使うか、PDF を渡してください。任意の `unpaywall` プラグインで OA 版を探せますが、自動保存を拒否する出版社は多く、保存できても出版版ではなく著者最終稿や査読前原稿のことがあります。
 - **抄録と全文は食い違うことがあります**：重要な数値は全文で確認してください。
 - **著者が多い論文**（31名以上）は、`fetch`・`fetch_batch`・`search` の full モード・`batch_process` では先頭10名と「et al.」で返ります。既定の compact モードの検索結果では、第一著者と「et al.」で表示されます。
 - **出版タイプ**は PubMed の索引付けに依存し、新しい論文では付いていないことがあります。スキルでは自由語と組み合わせて補っています。

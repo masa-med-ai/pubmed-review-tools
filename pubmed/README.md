@@ -21,5 +21,8 @@ Install / インストール:
 Requires Node.js 18+. `NCBI_API_KEY` (optional) is read from the environment.
 Node.js 18 以上が必要です。`NCBI_API_KEY`（任意）は環境変数から読み込みます。
 
+The optional `unpaywall` plugin in the same marketplace lets `pubmed-literature-review` look for open-access copies outside PMC.
+同じ marketplace の任意プラグイン `unpaywall` を入れると、`pubmed-literature-review` が PMC 外の OA 版を探せます。
+
 Full documentation / 詳しい説明:
 **[English](../README.md)** | **[日本語](../README.ja.md)**

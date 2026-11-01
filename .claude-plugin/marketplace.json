@@ -4,15 +4,15 @@
     "name": "Masashi Misawa"
   },
   "metadata": {
-    "description": "PubMed search tools for Claude — a local PubMed MCP server bundled with search, reference-verification and literature-review skills.",
-    "version": "0.3.1"
+    "description": "PubMed search tools for Claude — a local PubMed MCP server bundled with search, reference-verification and literature-review skills, plus an optional Unpaywall plugin.",
+    "version": "0.4.0"
   },
   "plugins": [
     {
       "name": "pubmed",
       "source": "./pubmed",
       "description": "PubMed search toolkit: bundled local PubMed MCP server (10 tools) + skills for searching with hyperlinked citations, reference verification, and PubMed-only literature reviews (numeric extraction to Excel/slides).",
-      "version": "0.3.1",
+      "version": "0.4.0",
       "author": {
         "name": "Masashi Misawa"
       },
@@ -24,6 +24,24 @@
         "medical",
         "mcp",
         "systematic-review"
+      ]
+    },
+    {
+      "name": "unpaywall",
+      "source": {
+        "source": "github",
+        "repo": "masa-med-ai/unpaywall-skill"
+      },
+      "description": "Optional: find legal open-access copies of a paper by DOI with the Unpaywall API, and optionally save the PDF. Sends the DOI and your UNPAYWALL_EMAIL to Unpaywall.",
+      "author": {
+        "name": "Masashi Misawa"
+      },
+      "keywords": [
+        "unpaywall",
+        "open-access",
+        "full-text",
+        "doi",
+        "medical"
       ]
     }
   ]

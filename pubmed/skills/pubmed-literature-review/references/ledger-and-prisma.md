@@ -33,12 +33,15 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | `pmid` | PubMed ID | 2-3 |
 | `source_query` | 由来の query_id（複数なら `;` 区切り） | 2-2 / 2-3 |
 | `first_author` / `year` / `title` | ツールの返り値から（`search` を compact で取得すれば 2-3 で埋まる） | 2-3 |
+| `doi` | ツールの返り値から（`search` を compact で取得すれば 2-3 で埋まる。なければ空欄） | 2-3 |
 | `flags` | `retracted` / `retraction_notice` / `erratum` / `no_abstract` など（`;` 区切り） | 2-4 |
 | `screen_tiab` | `pending` / `include` / `exclude` / `uncertain` | 2-4 |
 | `tiab_exclude_reason` | 除外理由（1つ。撤回論文は `retracted`、撤回・訂正通知は `notice`） | 2-4 |
 | `study_id` | 研究単位のID（同一研究の別報告は同じ値） | 2-5 |
 | `ft_status` | `not_sought`（抄録のみモード・TiAb除外）/ `retrieved` / `not_retrieved` | 2-6 |
-| `full_text_source` | `pmc` / `pdf` / `none`（探したが入手できず）/ `n/a`（全文を探していない） | 2-6 |
+| `full_text_source` | `pmc` / `oa_pdf`（`unpaywall` で保存）/ `pdf`（ユーザーが提供）/ `none`（探したが入手できず）/ `n/a`（全文を探していない） | 2-6 |
+| `full_text_version` | `oa_pdf` の行は `saved_version` の値（`publishedVersion` / `acceptedVersion` / `submittedVersion`、値がなければ `unknown`）。ほかの行は `n/a` | 2-6 |
+| `full_text_path` | `oa_pdf` / `pdf` の行は保存済みPDFのパス。ほかの行は `n/a` | 2-6 |
 | `eligibility` | `pending` / `included` / `excluded` | 2-6（抄録のみモードは 2-4） |
 | `eligibility_exclude_reason` | 全文での適格性判定の除外理由（1つ） | 2-6 |
 | `extraction_status` | `pending` / `extracted` / `verified` / `n/a`（採用されなかった行） | Phase 3 / 4 |
