@@ -1,12 +1,13 @@
 # pubmed (Claude Code plugin)
 
-A PubMed search toolkit for Claude Code: a local PubMed MCP server (10 tools) plus three skills and one agent.
-PubMed を Claude Code から使うための検索ツール群です。ローカルの PubMed MCP サーバー（10ツール）、スキル3つ、エージェント1つで構成されています。
+A PubMed search toolkit for Claude Code: a local PubMed MCP server (10 tools) plus four skills and one agent.
+PubMed を Claude Code から使うための検索ツール群です。ローカルの PubMed MCP サーバー（10ツール）、スキル4つ、エージェント1つで構成されています。
 
 | Component / 種類 | Name / 名前 |
 |---|---|
 | MCP server | `pubmed` — [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2)@2.0.4 via `npx` |
 | Skill | `pubmed-search` — everyday searching with hyperlinked citations / 出典リンク付きの文献検索 |
+| Skill | `pubmed-key-papers` — finds high-impact papers for a clinical question / CQ に対する影響度の高い鍵論文の選定 |
 | Skill | `pubmed-reference-verifier` — checks a manuscript's references against PubMed / 原稿の参考文献チェック |
 | Skill | `pubmed-literature-review` — PubMed-only, review-style numeric extraction to Excel/slides / PubMed のみを対象にした数値抽出と表・スライド化 |
 | Agent | `literature-scout` — quick literature scan / 文献の下調べ |

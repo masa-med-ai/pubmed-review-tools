@@ -27,6 +27,7 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
   - [pubmed-search：ふだんの文献検索](#pubmed-searchふだんの文献検索)
   - [pubmed-reference-verifier：原稿の参考文献チェック](#pubmed-reference-verifier原稿の参考文献チェック)
   - [pubmed-literature-review：複数論文の数値を表にまとめる](#pubmed-literature-review複数論文の数値を表にまとめる)
+  - [pubmed-key-papers](#pubmed-key-papers)
   - [literature-scout エージェント](#literature-scout-エージェント)
   - [MCP の10ツール](#mcp-の10ツール)
 - [出典の表記](#出典の表記)
@@ -45,6 +46,7 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
 |---|---|---|
 | MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.4（`npx -y pubmed_mcp_server2@2.0.4` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
 | スキル | `pubmed-search` | ふだんの PubMed 検索。MeSH と自由語で検索式を組み、件数を確認し、抄録を読んで、出典リンク付きで答える |
+| スキル | `pubmed-key-papers` | CQ に対して影響度の高い論文を5〜10本選ぶ。検索結果を iCite の指標で順位付けし、CQ への適合と研究デザインを確認して、参考文献と被引用を前後にたどる |
 | スキル | `pubmed-reference-verifier` | 原稿の本文中引用と参考文献リストの対応をチェックし、各文献を PubMed で照合する（実在・著者・年・タイトル・雑誌・DOI） |
 | スキル | `pubmed-literature-review` | PubMed を系統的に検索してスクリーニングし、抄録や PMC 全文から数値（N数・アウトカム・効果量・95%CI・P値）を抜き出して Excel・CSV・スライドにまとめる。メタ解析用データの収集にも対応 |
 | エージェント | `literature-scout` | 文献の下調べを別の文脈で行い、要約と出典リストを返す |
@@ -213,6 +215,16 @@ Vancouver 形式（`[1]`、`[1-3]`）、Pandoc 形式（`[@key]`）、本文に�
 - このスキルの結果は「PubMed に基づくラピッドレビュー」「エビデンスマップ」「レビューのデータ収集段階」などと表現し、データベースが1つだけである限界を明記してください。成果物でもスキルがそのことを促します。
 - メタ解析用のデータは集めますが、統合効果量・I²・forest plot は計算しません。それらは R（`meta`、`metafor`）や RevMan などで行ってください。
 
+### pubmed-key-papers
+
+すべてを集めるのではなく、見落としたくない論文を知りたいときに使います。
+
+- 「CADe で腺腫検出は改善するか、鍵論文を探して」
+
+被引用の指標を見る前に CQ への適合を判定し、適合、研究デザイン、RCR（Relative Citation Ratio）の順に比べて、影響度の高い候補を返します。RCR が確定していない新しい論文は落とさず別枠で示し、被引用が多くても CQ に合わない論文は理由を添えて示します。被引用の多さは研究の質を保証しないので、結果を「最良のエビデンス」とは呼びません。
+
+Python 3 が必要で、`pubmed-search` に同梱のスクリプトから NCBI と iCite に接続します。`pubmed-literature-review` は鍵論文を検索式の確認に使えますが、採否の判断には使いません。
+
 ### literature-scout エージェント
 
 メインの会話を検索結果で埋めずに、ざっと全体像をつかみたいときに使います。
@@ -257,6 +269,7 @@ Claude が回答に論文を使うときは、第一著者・雑誌名・発刊�
 
 - MCP サーバーはローカルで（stdio で）動きます。サーバーの API 通信は**お使いの PC から直接** NCBI E-utilities、PubMed Central、iCite（NIH）へ送られ、プラグインの作者や他のサービスには送られません。
 - これは MCP サーバーの通信についての説明です。Claude との会話（Claude が読む検索結果を含む）は、通常どおり Anthropic の規約のもとで Claude が処理します（[データの取り扱い](https://code.claude.com/docs/en/data-usage)）。また `literature-scout` エージェントは Claude の Web 検索を使うことがあります。
+- `pubmed-key-papers` は同梱のスクリプトをお使いの PC で実行し、同じように NCBI と iCite へ直接接続します。
 - `NCBI_API_KEY` はお使いの環境に置かれ、送信先は NCBI だけです。
 - NCBI の[利用規約](https://www.ncbi.nlm.nih.gov/home/about/policies/)が適用されます。
 - 任意の `unpaywall` プラグインは MCP サーバーとは別のものです。入れて使うと、DOI と `UNPAYWALL_EMAIL` のメールアドレスが Unpaywall に送られ、PDF を保存するときは Unpaywall が返した出版社やリポジトリへ接続します。
@@ -266,6 +279,7 @@ Claude が回答に論文を使うときは、第一著者・雑誌名・発刊�
 - **PubMed のみ**：Embase、CENTRAL、Web of Science、Scopus、試験登録は検索しません。
 - **全文**は PubMed Central 収録の論文だけです。それ以外は抄録を使うか、PDF を渡してください。任意の `unpaywall` プラグインで OA 版を探せますが、自動保存を拒否する出版社は多く、保存できても出版版ではなく著者最終稿や査読前原稿のことがあります。
 - **抄録と全文は食い違うことがあります**：重要な数値は全文で確認してください。
+- **被引用の指標は注目度を示すもので、質の指標ではありません**：iCite の更新には遅れがあり、新しい論文の RCR は未算出か暫定値のことが多いです。`pubmed-key-papers` はこれらを別枠で示します。
 - **著者が多い論文**（31名以上）は、`fetch`・`fetch_batch`・`search` の full モード・`batch_process` では先頭10名と「et al.」で返ります。既定の compact モードの検索結果では、第一著者と「et al.」で表示されます。
 - **出版タイプ**は PubMed の索引付けに依存し、新しい論文では付いていないことがあります。スキルでは自由語と組み合わせて補っています。
 - **検索結果を固定する機能（WebEnv）がありません**：非常に件数が多いと、ページ送りの途中で順位がずれることがあります。literature-review スキルは全ページを2回取得してこれを検出しますが、完全性は保証できません。

@@ -25,6 +25,7 @@ checking a manuscript's references, and collecting numbers from many papers into
   - [pubmed-search: everyday searching](#pubmed-search-everyday-searching)
   - [pubmed-reference-verifier: checking a manuscript's references](#pubmed-reference-verifier-checking-a-manuscripts-references)
   - [pubmed-literature-review: tables of numbers from many papers](#pubmed-literature-review-tables-of-numbers-from-many-papers)
+  - [pubmed-key-papers](#pubmed-key-papers)
   - [literature-scout agent](#literature-scout-agent)
   - [The 10 MCP tools](#the-10-mcp-tools)
 - [Citation format](#citation-format)
@@ -43,6 +44,7 @@ checking a manuscript's references, and collecting numbers from many papers into
 |---|---|---|
 | MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.4, launched with `npx -y pubmed_mcp_server2@2.0.4`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
 | Skill | `pubmed-search` | Everyday PubMed searching: builds MeSH + free-text queries, checks hit counts, reads abstracts, and answers with hyperlinked citations. |
+| Skill | `pubmed-key-papers` | Finds the 5–10 most influential papers for a clinical question: ranks search results with iCite metrics, checks fit to the question and study design, and follows references and citing papers in both directions. |
 | Skill | `pubmed-reference-verifier` | Checks that in-text citations match the reference list, and verifies each reference against PubMed (existence, authors, year, title, journal, DOI). |
 | Skill | `pubmed-literature-review` | Searches PubMed systematically, screens records, and extracts numbers (N, outcomes, effect sizes, 95% CI, P values) from abstracts or PMC full text into Excel, CSV, or slides. Can also collect meta-analysis input data. |
 | Agent | `literature-scout` | Does a quick literature scan in a separate context and returns a summary with a citation list. |
@@ -198,6 +200,16 @@ The ledger makes long reviews resumable: if a session is interrupted, Claude rea
 
 This skill searches **PubMed only**. A full systematic review needs several databases (for example Embase and CENTRAL) and trial registries. Describe results from this skill as a PubMed-based rapid review, an evidence map, or the data-collection step of a review, and state the single-database limitation. The skill reminds you of this in its outputs. It collects meta-analysis input data, but doesn't compute pooled estimates, I², or forest plots; use R (`meta`, `metafor`), RevMan, or similar for those.
 
+### pubmed-key-papers
+
+Use it when you want the papers you shouldn't miss, not a complete collection:
+
+- "Find the key papers on whether computer-aided detection improves adenoma detection."
+
+The skill judges fit to your question before it looks at citation metrics, ranks papers by fit, study design, and then Relative Citation Ratio (RCR), and returns high-impact candidates. Recent papers without a settled RCR get their own section instead of being dropped, and highly cited papers that don't fit your question are listed with the reason. High citation counts don't prove quality, so the skill never calls its results the best evidence.
+
+It needs Python 3 and calls NCBI and iCite with a script bundled in `pubmed-search`. The literature-review skill can use its key papers to test a search strategy, but never to choose which papers to include.
+
 ### literature-scout agent
 
 Use it when you want a quick overview without filling your main conversation with search results:
@@ -237,6 +249,7 @@ Authors, journal, year, and PMID always come from the tool results, never from m
 
 - The MCP server runs locally over stdio. Its API requests go **directly from your computer** to NCBI E-utilities, PubMed Central, and iCite (NIH). They are not sent to the plugin author or to any other service.
 - This covers the MCP server only. Your conversation with Claude, including the search results Claude reads, is processed by Claude as usual under Anthropic's terms ([data usage](https://code.claude.com/docs/en/data-usage)). The `literature-scout` agent may also use Claude's web search.
+- `pubmed-key-papers` runs a bundled script on your computer. It connects directly to NCBI and iCite in the same way.
 - Your `NCBI_API_KEY` stays in your environment. It is sent only to NCBI.
 - NCBI's [usage policies](https://www.ncbi.nlm.nih.gov/home/about/policies/) apply.
 - The optional `unpaywall` plugin is separate from the MCP server. If you install and use it, the DOI and your `UNPAYWALL_EMAIL` go to Unpaywall, and saving a PDF connects to the publisher or repository that Unpaywall returns.
@@ -246,6 +259,7 @@ Authors, journal, year, and PMID always come from the tool results, never from m
 - **PubMed only.** Embase, CENTRAL, Web of Science, Scopus, and trial registries are not searched.
 - **Full text** is available only for articles in PubMed Central. For other articles, use abstracts or provide PDFs yourself. The optional `unpaywall` plugin can find open-access copies, but many publishers block automatic downloads, and a saved copy may be an accepted manuscript or a preprint rather than the published version.
 - **Abstracts can disagree with full texts.** Check important numbers against the full paper.
+- **Citation metrics measure attention, not quality.** iCite updates with a delay, and recent papers often have no RCR or only a provisional one. `pubmed-key-papers` shows them separately.
 - **Long author lists** (more than 30 authors) are returned as the first 10 names plus "et al." by `fetch`, `fetch_batch`, `search` in full mode, and `batch_process`. Search results in the default compact mode show the first author plus "et al.".
 - **Publication-type tags** in PubMed depend on indexing and can be missing for recent papers. The skills combine them with free-text terms.
 - **No search snapshot (WebEnv).** Very large result sets can shift while being paged. The literature-review skill reads every page twice to detect this, but can't guarantee completeness.

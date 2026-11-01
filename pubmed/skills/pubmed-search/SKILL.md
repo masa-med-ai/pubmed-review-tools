@@ -1,6 +1,6 @@
 ---
 name: pubmed-search
-description: PubMed で効率的で質の高い医学文献検索を行うためのスキル。PubMed MCP ツール群（search / count / fetch_batch / find_similar_articles / get_citation_counts / get_full_text / convert_ids など）があればそれを使い、MCP が無い環境では同梱 CLI（scripts/pubmed_eutils.py、NCBI E-utilities 直叩き・Python 3 標準ライブラリのみ）で同じワークフローを実行する。ユーザーが医学・生物学・臨床の文献を「調べて」「探して」「エビデンスを」「論文を」と依頼したとき、また PubMed・MeSH・PICO・RCT・PMID・DOI に言及したときは、明示的に「PubMedで検索して」と言われなくてもこのスキルを使うこと。検索結果を提示する際の引用フォーマット（ハイパーリンク付き）もこのスキルで規定する。ただし、複数文献の数値抽出・比較表・Excel/スライド化は pubmed-literature-review を、原稿の本文中引用と参考文献リストの整合性検証は pubmed-reference-verifier を優先する。
+description: PubMed で効率的で質の高い医学文献検索を行うためのスキル。PubMed MCP ツール群（search / count / fetch_batch / find_similar_articles / get_citation_counts / get_full_text / convert_ids など）があればそれを使い、MCP が無い環境では同梱 CLI（scripts/pubmed_eutils.py、NCBI E-utilities 直叩き・Python 3 標準ライブラリのみ）で同じワークフローを実行する。ユーザーが医学・生物学・臨床の文献を「調べて」「探して」「エビデンスを」「論文を」と依頼したとき、また PubMed・MeSH・PICO・RCT・PMID・DOI に言及したときは、明示的に「PubMedで検索して」と言われなくてもこのスキルを使うこと。検索結果を提示する際の引用フォーマット（ハイパーリンク付き）もこのスキルで規定する。ただし、複数文献の数値抽出・比較表・Excel/スライド化は pubmed-literature-review を、CQ に対する鍵論文の選定は pubmed-key-papers を、原稿の本文中引用と参考文献リストの整合性検証は pubmed-reference-verifier を優先する。
 ---
 
 # PubMed Search
@@ -153,7 +153,7 @@ AND (cardiovascular[tiab] OR "heart failure"[tiab])
 ### Step 5. 深掘りして提示する
 
 - 抄録が必要な候補は **`fetch_batch`**（複数 PMID を一括）で取得。1 件だけなら `fetch`。一括取得は 5〜10 件ずつに分け、**要求した PMID がすべて返っているか確認してから**次に進む（返っていない PMID の内容を推定しない）。
-- 影響度の目安が欲しいときは **`get_citation_counts`**（既定 `icite` は被引用数のみ・高速）。
+- 影響度の目安が欲しいときは **`get_citation_counts`**（既定 `icite`・高速）。CLI は被引用数に加えて RCR なども返す。MCP はサーバーの版によって被引用数だけのことがある。数本の鍵論文を選ぶなら `pubmed-key-papers` を使う。
 - 全文が要るときは **`get_full_text`**（PMC ID を渡す。`sections` で必要章のみに絞りトークン節約）。PMC ID が無ければ `convert_ids` で PMID→PMCID。
 - 最後に、選んだ論文を **§2 の引用形式**で提示。臨床質問ではエビデンス階層（メタアナリシス／システマティックレビュー ＞ RCT ＞ 観察研究）を意識して並べ、各論文が何を示したかを一言添える。
 

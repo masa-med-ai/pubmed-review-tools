@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import csv
+import datetime
 import html
 import json
 import os
@@ -42,6 +44,29 @@ LANG_MAP = {
     "chi": "chinese",
     "kor": "korean",
 }
+ICITE_METRICS = (
+    "year",
+    "relative_citation_ratio",
+    "nih_percentile",
+    "citations_per_year",
+    "is_clinical",
+    "is_research_article",
+    "provisional",
+)
+CANDIDATE_COLUMNS = (
+    "pmid",
+    "first_author",
+    "journal",
+    "year",
+    "title",
+    "doi",
+    "citation_count",
+    "relative_citation_ratio",
+    "nih_percentile",
+    "citations_per_year",
+    "provisional",
+    "relevance_rank",
+)
 
 
 def chunks(values: list[str], size: int) -> Iterable[list[str]]:
@@ -548,21 +573,157 @@ class PubMedClient:
             )
         return {"reference_pmid": pmid, "similar_articles": articles, "count": len(articles), "error": None}
 
-    def citation_counts(self, pmids: list[str], source: str, include_citing: bool) -> list[dict[str, Any]]:
+    def icite(self, pmids: list[str]) -> dict[str, dict[str, Any]]:
+        by_pmid: dict[str, dict[str, Any]] = {}
+        for part in chunks(unique(pmids), 200):
+            data = self.get_json(ICITE, {"pmids": ",".join(part), "format": "json"}, add_common=False)
+            for item in data.get("data", []) or []:
+                by_pmid[str(item.get("pmid"))] = item
+        return by_pmid
+
+    def citation_counts(
+        self,
+        pmids: list[str],
+        source: str,
+        include_citing: bool,
+        include_references: bool = False,
+    ) -> list[dict[str, Any]]:
         requested = unique(pmids)
         if source == "pubmed":
             return [self._pubmed_citations(pmid, include_citing) for pmid in requested]
-        data = self.get_json(ICITE, {"pmids": ",".join(requested), "format": "json"}, add_common=False)
-        by_pmid = {str(item.get("pmid")): item for item in data.get("data", []) or []}
-        return [
-            {
+        by_pmid = self.icite(requested)
+        rows: list[dict[str, Any]] = []
+        for pmid in requested:
+            item = by_pmid.get(pmid, {})
+            row = {
                 "pmid": pmid,
-                "citation_count": by_pmid.get(pmid, {}).get("citation_count"),
+                "citation_count": item.get("citation_count"),
                 "source": "icite",
-                **({"note": "Citation data not available"} if pmid not in by_pmid else {}),
+                **{key: item.get(key) for key in ICITE_METRICS},
             }
-            for pmid in requested
-        ]
+            if include_references:
+                row["references"] = [str(value) for value in item.get("references") or []]
+            if pmid not in by_pmid:
+                row["note"] = "Citation data not available"
+            rows.append(row)
+        return rows
+
+    def _candidate(self, pmid: str, item: dict[str, Any], summary: dict[str, Any]) -> dict[str, Any]:
+        authors = item.get("authors") or []
+        first = authors[0] if authors else {}
+        initials = "".join(part[0] for part in re.split(r"[\s-]+", first.get("firstName") or "") if part)
+        return {
+            "pmid": pmid,
+            "first_author": clean_text(f"{first.get('lastName', '')} {initials}") or (summary.get("authors") or [""])[0],
+            "journal": item.get("journal") or summary.get("journal", ""),
+            "year": item.get("year") or summary.get("year", ""),
+            "title": re.sub(r"</?[a-z]+>", "", clean_text(item.get("title"))) or summary.get("title", ""),
+            "doi": item.get("doi") or summary.get("doi"),
+            "citation_count": item.get("citation_count"),
+            "relative_citation_ratio": item.get("relative_citation_ratio"),
+            "nih_percentile": item.get("nih_percentile"),
+            "citations_per_year": item.get("citations_per_year"),
+            "provisional": item.get("provisional"),
+        }
+
+    def _candidates(self, pmids: list[str]) -> dict[str, dict[str, Any]]:
+        # Very new records can be absent from iCite; keep them with PubMed
+        # metadata so they still reach the recent bucket.
+        metrics = self.icite(pmids)
+        summaries = self.summaries([pmid for pmid in pmids if pmid not in metrics])
+        return {
+            pmid: self._candidate(pmid, metrics.get(pmid, {}), summaries.get(pmid, {}))
+            for pmid in pmids
+            if pmid in metrics or pmid in summaries
+        }
+
+    def _add_publication_data(self, rows: list[dict[str, Any]]) -> None:
+        records = {item["pmid"]: item for item in self.fetch_batch([row["pmid"] for row in rows], False)}
+        for row in rows:
+            record = records.get(row["pmid"], {})
+            row["publication_types"] = record.get("publication_types", [])
+            row["retracted"] = "Retracted Publication" in row["publication_types"]
+            if record.get("authors"):
+                row["first_author"] = record["authors"][0]
+
+    def impact_candidates(self, query: str, *, max_records: int, top: int, output: str) -> dict[str, Any]:
+        data = self.get_json(
+            f"{EUTILS}/esearch.fcgi",
+            {"db": "pubmed", "term": query, "retmode": "json", "retmax": max_records, "sort": "relevance"},
+        )
+        result = data.get("esearchresult", {})
+        pmids = [str(value) for value in result.get("idlist", [])]
+        total = int(result.get("count", 0))
+        by_pmid = self._candidates(pmids)
+        rank = {pmid: index for index, pmid in enumerate(pmids, 1)}
+        for pmid, row in by_pmid.items():
+            row["relevance_rank"] = rank[pmid]
+        with open(output, "w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, CANDIDATE_COLUMNS)
+            writer.writeheader()
+            writer.writerows(by_pmid[pmid] for pmid in pmids if pmid in by_pmid)
+
+        rows = [by_pmid[pmid] for pmid in pmids if pmid in by_pmid]
+        settled = [row for row in rows if row["relative_citation_ratio"] is not None and not row["provisional"]]
+        settled_pmids = {row["pmid"] for row in settled}
+        recent_from = datetime.date.today().year - 1
+
+        def is_recent(row: dict[str, Any]) -> bool:
+            year = str(row["year"])
+            return row["pmid"] not in settled_pmids or (year.isdigit() and int(year) >= recent_from)
+
+        recent = [row for row in rows if is_recent(row)]
+        routes: dict[str, list[str]] = {}
+        for route, picked in (
+            ("top_rcr", sorted(settled, key=lambda row: row["relative_citation_ratio"], reverse=True)),
+            ("top_citations", sorted(rows, key=lambda row: row["citation_count"] or 0, reverse=True)),
+            ("relevance", rows),
+            ("recent_cited", sorted(recent, key=lambda row: row["relative_citation_ratio"] or 0, reverse=True)),
+            ("recent", recent),
+        ):
+            for row in picked[:top]:
+                routes.setdefault(row["pmid"], []).append(route)
+        shortlist = [{**by_pmid[pmid], "routes": names} for pmid, names in routes.items()]
+        self._add_publication_data(shortlist)
+        return {
+            "query": query,
+            "query_translation": result.get("querytranslation", ""),
+            "total": total,
+            "retrieved": len(pmids),
+            "truncated": total > len(pmids),
+            "rcr_unavailable": len(rows) - len(settled),
+            "output": os.path.abspath(output),
+            "shortlist": shortlist,
+        }
+
+    def chain_candidates(self, seeds: list[str], *, known: str | None, min_shared: int, top: int) -> dict[str, Any]:
+        requested = unique(seeds)
+        metrics = self.icite(requested)
+        known_pmids: set[str] = set(requested)
+        if known:
+            with open(known, encoding="utf-8", newline="") as handle:
+                known_pmids.update(row["pmid"] for row in csv.DictReader(handle))
+
+        def shared(field: str) -> list[tuple[str, int]]:
+            counts: dict[str, int] = {}
+            for item in metrics.values():
+                for value in set(item.get(field) or []):
+                    counts[str(value)] = counts.get(str(value), 0) + 1
+            hits = [(pmid, count) for pmid, count in counts.items() if count >= min_shared and pmid not in known_pmids]
+            return sorted(hits, key=lambda hit: hit[1], reverse=True)[:top]
+
+        output: dict[str, Any] = {
+            "seeds_found": len(metrics),
+            "seeds_missing": [pmid for pmid in requested if pmid not in metrics],
+            "min_shared": min_shared,
+        }
+        for name, field in (("backward", "references"), ("forward", "cited_by")):
+            hits = shared(field)
+            by_pmid = self._candidates([pmid for pmid, _ in hits])
+            rows = [{**by_pmid[pmid], "shared_seeds": count} for pmid, count in hits if pmid in by_pmid]
+            self._add_publication_data(rows)
+            output[name] = rows
+        return output
 
     def _pubmed_citations(self, pmid: str, include: bool) -> dict[str, Any]:
         data = self.get_json(
@@ -703,6 +864,20 @@ def build_parser() -> argparse.ArgumentParser:
     citations.add_argument("pmids", nargs="+")
     citations.add_argument("--source", choices=["icite", "pubmed"], default="icite")
     citations.add_argument("--include-citing-pmids", action="store_true")
+    citations.add_argument("--include-references", action="store_true")
+
+    impact = sub.add_parser("impact-candidates", help="Rank search results by iCite metrics and write a CSV")
+    impact.add_argument("query")
+    impact.add_argument("--output", required=True)
+    impact.add_argument("--max-records", type=int, default=2000, choices=range(1, 10000), metavar="1-9999")
+    impact.add_argument("--top", type=int, default=10, choices=range(1, 51), metavar="1-50")
+    add_filter_arguments(impact)
+
+    chain = sub.add_parser("chain-candidates", help="Find papers shared by the references or citers of seed PMIDs")
+    chain.add_argument("seeds", nargs="+")
+    chain.add_argument("--known", help="CSV from impact-candidates; its PMIDs are left out")
+    chain.add_argument("--min-shared", type=int, default=2, choices=range(1, 51), metavar="1-50")
+    chain.add_argument("--top", type=int, default=15, choices=range(1, 51), metavar="1-50")
 
     convert = sub.add_parser("convert-ids", help="Convert PMID, PMCID, and DOI")
     convert.add_argument("ids", nargs="+")
@@ -790,7 +965,28 @@ def main() -> int:
         elif args.command == "get-citation-counts":
             if len(args.pmids) > 1000:
                 raise ValueError("get-citation-counts accepts at most 1000 PMIDs")
-            output = {"items": client.citation_counts(args.pmids, args.source, args.include_citing_pmids)}
+            output = {
+                "items": client.citation_counts(
+                    args.pmids,
+                    args.source,
+                    args.include_citing_pmids,
+                    args.include_references,
+                )
+            }
+        elif args.command == "impact-candidates":
+            output = client.impact_candidates(
+                client.build_filtered_query(args.query, args),
+                max_records=args.max_records,
+                top=args.top,
+                output=args.output,
+            )
+        elif args.command == "chain-candidates":
+            output = client.chain_candidates(
+                args.seeds,
+                known=args.known,
+                min_shared=args.min_shared,
+                top=args.top,
+            )
         elif args.command == "convert-ids":
             if len(args.ids) > 200:
                 raise ValueError("convert-ids accepts at most 200 identifiers")

@@ -6,7 +6,9 @@
 | `fetch`, `fetch-batch` | NCBI PubMed EFetch | Abstract, authors, MeSH, publication types, DOI | Usually not the article full text |
 | `get-full-text` | NCBI PMC EFetch | JATS full text and selected sections | Only PMC-downloadable content |
 | `find-similar-articles` | NCBI ELink `pubmed_pubmed` | NCBI-computed related PMIDs and summaries | Similarity is discovery support, not an inclusion criterion |
-| `get-citation-counts --source icite` | NIH iCite | Citation count | Coverage and update timing differ from other indexes |
+| `get-citation-counts --source icite` | NIH iCite | Citation count, RCR, percentile, citations per year, clinical and research flags; references with `--include-references` | Coverage and update timing differ from other indexes; RCR is missing or provisional for recent papers |
+| `impact-candidates` | NCBI ESearch + NIH iCite + PubMed EFetch | Full candidate CSV and a shortlist with publication types | Metrics rank attention, not quality or fit to the question |
+| `chain-candidates` | NIH iCite + PubMed EFetch | Papers shared by the references or citers of seed PMIDs | Limited to what iCite links; seeds must be screened first |
 | `get-citation-counts --source pubmed` | NCBI ELink `pubmed_pubmed_citedin` | PubMed citing PMIDs and count | Counts only PubMed-linked citing records |
 | `convert-ids` | NCBI PMC ID Converter | PMID, PMCID, DOI mappings | A DOI does not guarantee a PMCID or open full text |
 | `export-to-ris` | PubMed EFetch | Compact RIS | Verify metadata after reference-manager import |

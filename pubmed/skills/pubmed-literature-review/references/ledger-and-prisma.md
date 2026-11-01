@@ -31,7 +31,7 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 | 列 | 値 | 埋まる時点 |
 |---|---|---|
 | `pmid` | PubMed ID | 2-3 |
-| `source_query` | 由来の query_id（複数なら `;` 区切り） | 2-2 / 2-3 |
+| `source_query` | 由来の query_id（複数なら `;` 区切り）。検索式の外から足した論文は `citation` | 2-2 / 2-3 |
 | `first_author` / `year` / `title` | ツールの返り値から（`search` を compact で取得すれば 2-3 で埋まる） | 2-3 |
 | `doi` | ツールの返り値から（`search` を compact で取得すれば 2-3 で埋まる。なければ空欄） | 2-3 |
 | `flags` | `retracted` / `retraction_notice` / `erratum` / `no_abstract` など（`;` 区切り） | 2-4 |
@@ -66,11 +66,13 @@ SKILL.md の「作業ディレクトリ」「Phase 2」「Phase 4-0」から参�
 ## 4. PRISMA 2020 の件数の計算
 
 台帳と検索記録から次のように数える（PubMed単独なので「Records identified from databases」は1行）。
+`source_query=citation` の行がなければ「Records identified from other methods」は書かない。
 
 | PRISMA 2020 の項目 | 計算 |
 |---|---|
 | Records identified (PubMed) | 検索式ごとのユニーク PMID 数の合計（ページングの取り直しで生じた同一検索式内の重複は数えない） |
-| Duplicate records removed | Records identified − 全体のユニーク PMID 数（複数の検索式にまたがる重複） |
+| Records identified from other methods | `source_query=citation` の行数（citation searching） |
+| Duplicate records removed | Records identified (PubMed) − 検索式由来のユニーク PMID 数（複数の検索式にまたがる重複） |
 | Records screened | ユニーク PMID 数（= ledger の行数） |
 | Records excluded | `screen_tiab=exclude` の件数（理由別の内訳も） |
 | Reports sought for retrieval | （全文モード）`screen_tiab` が `include` または `uncertain` の件数 |
