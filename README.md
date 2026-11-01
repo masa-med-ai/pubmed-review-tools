@@ -2,10 +2,11 @@
 
 **English** | [日本語](README.ja.md)
 
-A Claude Code plugin marketplace that distributes **`pubmed`**: a PubMed search toolkit for Claude.
-It bundles a local PubMed MCP server with skills for searching PubMed with hyperlinked citations,
-checking a manuscript's references, and collecting numbers from many papers into tables
+A Claude Code plugin marketplace that distributes **`pubmed`**, a PubMed search toolkit for Claude, and the optional **`unpaywall`** plugin.
+`pubmed` bundles a local PubMed MCP server with skills for searching PubMed with hyperlinked citations,
+finding high-impact key papers for a clinical question, checking a manuscript's references, and collecting numbers from many papers into tables
 (a PubMed-only, systematic-review-style workflow).
+With `unpaywall`, Claude can also look up legal open-access copies by DOI and save the PDF.
 
 - The MCP server runs **on your computer** and talks to NCBI directly. Its requests don't pass through any server run by the plugin author.
 - No manual server installation: Claude Code starts it with `npx` when the plugin is enabled.
@@ -20,12 +21,14 @@ checking a manuscript's references, and collecting numbers from many papers into
 - [What's included](#whats-included)
 - [Requirements](#requirements)
 - [Installation](#installation)
+  - [Optional: add unpaywall](#optional-add-unpaywall)
 - [NCBI API key (optional, recommended)](#ncbi-api-key-optional-recommended)
 - [Usage](#usage)
   - [pubmed-search: everyday searching](#pubmed-search-everyday-searching)
+  - [pubmed-key-papers: key papers for a clinical question](#pubmed-key-papers-key-papers-for-a-clinical-question)
   - [pubmed-reference-verifier: checking a manuscript's references](#pubmed-reference-verifier-checking-a-manuscripts-references)
   - [pubmed-literature-review: tables of numbers from many papers](#pubmed-literature-review-tables-of-numbers-from-many-papers)
-  - [pubmed-key-papers](#pubmed-key-papers)
+  - [unpaywall: open-access copies (optional)](#unpaywall-open-access-copies-optional)
   - [literature-scout agent](#literature-scout-agent)
   - [The 10 MCP tools](#the-10-mcp-tools)
 - [Citation format](#citation-format)
@@ -42,31 +45,24 @@ checking a manuscript's references, and collecting numbers from many papers into
 
 | Component | Name | What it does |
 |---|---|---|
-| MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.4, launched with `npx -y pubmed_mcp_server2@2.0.4`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
+| MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.1.0, launched with `npx -y pubmed_mcp_server2@2.1.0`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
 | Skill | `pubmed-search` | Everyday PubMed searching: builds MeSH + free-text queries, checks hit counts, reads abstracts, and answers with hyperlinked citations. |
 | Skill | `pubmed-key-papers` | Finds the 5–10 most influential papers for a clinical question: ranks search results with iCite metrics, checks fit to the question and study design, and follows references and citing papers in both directions. |
 | Skill | `pubmed-reference-verifier` | Checks that in-text citations match the reference list, and verifies each reference against PubMed (existence, authors, year, title, journal, DOI). |
 | Skill | `pubmed-literature-review` | Searches PubMed systematically, screens records, and extracts numbers (N, outcomes, effect sizes, 95% CI, P values) from abstracts or PMC full text into Excel, CSV, or slides. Can also collect meta-analysis input data. |
 | Agent | `literature-scout` | Does a quick literature scan in a separate context and returns a summary with a citation list. |
+| Optional plugin | [`unpaywall`](https://github.com/masa-med-ai/unpaywall-skill) | Looks up legal open-access copies by DOI and can save the PDF. [Installed separately](#optional-add-unpaywall) from `pubmed`. |
 
 Skills are used automatically when your request matches them. You can also call them explicitly, for example `/pubmed:pubmed-search`.
-
-### Optional: `unpaywall` plugin
-
-The same marketplace also lists [`unpaywall`](https://github.com/masa-med-ai/unpaywall-skill), a separate plugin that looks up legal open-access copies by DOI and can save the PDF. When it is installed, `pubmed-literature-review` can use it for papers that are not in PMC.
-
-```
-/plugin install unpaywall@pubmed-review-tools
-```
-
-It needs Python 3.8+ and your own email address in `UNPAYWALL_EMAIL`. If you copied the skill to `~/.claude/skills/unpaywall`, delete that copy so two similar skills don't compete.
 
 ## Requirements
 
 - **Claude Code** (the one-line install command below needs 2.1.275 or later)
 - **Node.js 18 or later** — used by `npx` to start the MCP server. Check with `node -v`. Install from <https://nodejs.org/> if needed.
+- **Python 3.8 or later** — used by `pubmed-key-papers` and `unpaywall`. No extra packages are needed.
 - Internet access to `eutils.ncbi.nlm.nih.gov`, `pmc.ncbi.nlm.nih.gov`, and `icite.od.nih.gov`
 - *(Optional)* An NCBI API key — raises NCBI's rate limit from 3 to 10 requests per second
+- *(For `unpaywall`)* Your own email address in `UNPAYWALL_EMAIL`, and internet access to `api.unpaywall.org`
 - *(Optional, for `.docx` manuscripts)* [pandoc](https://pandoc.org/) — `pubmed-reference-verifier` uses it to read Word files
 
 ## Installation
@@ -92,6 +88,32 @@ Then restart Claude Code and check the server:
 
 Installation is complete when `pubmed` shows as **connected**.
 The first start can take 10–20 seconds while `npx` downloads the server; later starts use the cache.
+
+### Optional: add unpaywall
+
+To look for open-access copies of papers that are not in PMC, install `unpaywall` as well:
+
+```
+/plugin install unpaywall@pubmed-review-tools
+```
+
+Unpaywall identifies users by their own email address and rejects placeholders such as `example.com`. Put your address in `UNPAYWALL_EMAIL`, then restart Claude Code.
+
+macOS / Linux (zsh):
+
+```bash
+echo 'export UNPAYWALL_EMAIL="you@your-domain"' >> ~/.zshrc
+```
+
+(For bash, use `~/.bashrc` instead.)
+
+Windows (PowerShell):
+
+```powershell
+setx UNPAYWALL_EMAIL "you@your-domain"
+```
+
+If you copied the skill to `~/.claude/skills/unpaywall`, delete that copy so two similar skills don't compete.
 
 ## NCBI API key (optional, recommended)
 
@@ -144,6 +166,16 @@ Tips:
 - Ask for "more", "newer", or "only RCTs" to refine the search.
 - Ask for "papers similar to PMID 12345678" or "papers citing this one" to expand from a good paper.
 - Ask for an RIS file to import results into EndNote, Zotero, or Mendeley.
+
+### pubmed-key-papers: key papers for a clinical question
+
+Use it when you want the papers you shouldn't miss, not a complete collection:
+
+- "Find the key papers on whether computer-aided detection improves adenoma detection."
+
+The skill judges fit to your question before it looks at citation metrics, ranks papers by fit, study design, and then Relative Citation Ratio (RCR), and returns high-impact candidates. Recent papers without a settled RCR get their own section instead of being dropped, and highly cited papers that don't fit your question are listed with the reason. High citation counts don't prove quality, so the skill never calls its results the best evidence.
+
+It calls NCBI and iCite with a script bundled in `pubmed-search`. The literature-review skill can use its key papers to test a search strategy, but never to choose which papers to include.
 
 ### pubmed-reference-verifier: checking a manuscript's references
 
@@ -200,15 +232,24 @@ The ledger makes long reviews resumable: if a session is interrupted, Claude rea
 
 This skill searches **PubMed only**. A full systematic review needs several databases (for example Embase and CENTRAL) and trial registries. Describe results from this skill as a PubMed-based rapid review, an evidence map, or the data-collection step of a review, and state the single-database limitation. The skill reminds you of this in its outputs. It collects meta-analysis input data, but doesn't compute pooled estimates, I², or forest plots; use R (`meta`, `metafor`), RevMan, or similar for those.
 
-### pubmed-key-papers
+### unpaywall: open-access copies (optional)
 
-Use it when you want the papers you shouldn't miss, not a complete collection:
+Available after you [add `unpaywall`](#optional-add-unpaywall). It doesn't search for papers. Use it when you already know which paper you want:
 
-- "Find the key papers on whether computer-aided detection improves adenoma detection."
+- "Is there a free version of DOI 10.xxxx/xxxxx?"
+- "Find an open-access copy of this paper and save the PDF."
 
-The skill judges fit to your question before it looks at citation metrics, ranks papers by fit, study design, and then Relative Citation Ratio (RCR), and returns high-impact candidates. Recent papers without a settled RCR get their own section instead of being dropped, and highly cited papers that don't fit your question are listed with the reason. High citation counts don't prove quality, so the skill never calls its results the best evidence.
+It reports the open-access type, version, license, and links, and saves a PDF only when you ask.
 
-It needs Python 3 and calls NCBI and iCite with a script bundled in `pubmed-search`. The literature-review skill can use its key papers to test a search strategy, but never to choose which papers to include.
+| Version | Meaning |
+|---|---|
+| `publishedVersion` | The published article |
+| `acceptedVersion` | The author's accepted manuscript after peer review |
+| `submittedVersion` | The manuscript before peer review |
+
+`pubmed-literature-review` can use it in full-text mode. The skill asks first, looks for papers that are not in PMC, and records the version it used in the ledger and outputs. The published version is preferred for checking numbers, so outputs state when another version was used.
+
+It only finds legally posted copies and doesn't bypass paywalls.
 
 ### literature-scout agent
 
@@ -230,7 +271,7 @@ You rarely need to call these directly. The skills use them for you.
 | `fetch_batch` | Abstracts, MeSH terms, and publication types for several PMIDs |
 | `get_full_text` | Section-aware full text from PubMed Central (PMC articles only) |
 | `find_similar_articles` | Related articles for a PMID |
-| `get_citation_counts` | Citation counts (iCite), or citing PMIDs from PubMed |
+| `get_citation_counts` | Citation counts and RCR from iCite, optional reference PMIDs, or citing PMIDs from PubMed |
 | `convert_ids` | Convert between PMID, PMCID, and DOI |
 | `export_to_ris` | RIS file for reference managers |
 | `batch_process` | Run several of the above on one set of PMIDs |
@@ -279,12 +320,19 @@ Then update the installed plugin, either from the **Installed** tab of `/plugin`
 claude plugin update pubmed@pubmed-review-tools
 ```
 
+If you use `unpaywall`, update it the same way:
+
+```bash
+claude plugin update unpaywall@pubmed-review-tools
+```
+
 Restart Claude Code afterwards.
 
 Uninstall:
 
 ```
 /plugin uninstall pubmed@pubmed-review-tools
+/plugin uninstall unpaywall@pubmed-review-tools
 ```
 
 **Upgrading from 0.1.x.** Version 0.1.x had one plugin named `pubmed-systematic-review`. It was renamed to `pubmed` in 0.2.0, so you need to reinstall:
@@ -307,6 +355,9 @@ If you also have older copies of these skills elsewhere (personal skills, or ski
 | The PubMed tools don't appear | Check that the plugin is enabled (`/plugin`), then restart Claude Code. |
 | A skill isn't used automatically | Call it explicitly, for example `/pubmed:pubmed-search`, or mention PubMed in your request. |
 | Two similar skills respond | Remove older copies of the skills (see [Upgrading from 0.1.x](#updating-uninstalling-and-upgrading-from-01x)). |
+| `pubmed-key-papers` or `unpaywall` can't run | Run `python3 --version` (needs 3.8 or later). |
+| `unpaywall` stops with `SETUP_REQUIRED` | Set [`UNPAYWALL_EMAIL`](#optional-add-unpaywall), then restart Claude Code. |
+| `unpaywall` can't save a PDF | Publishers often block automatic downloads. Open the returned link in your browser. |
 | `.docx` files can't be read by the verifier | Install [pandoc](https://pandoc.org/), or save the manuscript as Markdown. |
 
 ## Other ways to use the MCP server

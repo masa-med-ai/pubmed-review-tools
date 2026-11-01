@@ -2,12 +2,15 @@
 
 [English](README.md) | **日本語**
 
-Claude Code 用のプラグイン・マーケットプレイスです。PubMed 検索ツール群のプラグイン **`pubmed`** を配布しています。
-ローカルで動く PubMed MCP サーバーに、次の3つのスキルを組み合わせています。
+Claude Code 用のプラグイン・マーケットプレイスです。PubMed 検索ツール群のプラグイン **`pubmed`** と、任意で追加できる **`unpaywall`** を配布しています。
+`pubmed` は、ローカルで動く PubMed MCP サーバーに、次の4つのスキルを組み合わせています。
 
 - 出典リンク付きで PubMed を検索する
+- CQ に対して影響度の高い鍵論文を探す
 - 原稿の参考文献を照合する
 - 複数論文の数値を表にまとめる（PubMed のみを対象にした、系統的レビュー風のワークフロー）
+
+`unpaywall` を追加すると、DOI から合法的なオープンアクセス（OA）版を探し、PDF を保存できます。
 
 - MCP サーバーは**お使いの PC 上で動き**、NCBI に直接アクセスします。サーバーの通信が、プラグイン作者の運営するサーバーを経由することはありません。
 - サーバーを手動でインストールする必要はありません。プラグインを有効にすると、Claude Code が `npx` で自動起動します。
@@ -22,12 +25,14 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
 - [含まれるもの](#含まれるもの)
 - [動作環境](#動作環境)
 - [インストール](#インストール)
+  - [任意：unpaywall を追加する](#任意unpaywall-を追加する)
 - [NCBI APIキー（任意・推奨）](#ncbi-apiキー任意推奨)
 - [使い方](#使い方)
   - [pubmed-search：ふだんの文献検索](#pubmed-searchふだんの文献検索)
+  - [pubmed-key-papers：CQ の鍵論文を探す](#pubmed-key-paperscq-の鍵論文を探す)
   - [pubmed-reference-verifier：原稿の参考文献チェック](#pubmed-reference-verifier原稿の参考文献チェック)
   - [pubmed-literature-review：複数論文の数値を表にまとめる](#pubmed-literature-review複数論文の数値を表にまとめる)
-  - [pubmed-key-papers](#pubmed-key-papers)
+  - [unpaywall：OA 版を探す（任意）](#unpaywalloa-版を探す任意)
   - [literature-scout エージェント](#literature-scout-エージェント)
   - [MCP の10ツール](#mcp-の10ツール)
 - [出典の表記](#出典の表記)
@@ -44,31 +49,24 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
 
 | 種類 | 名前 | 内容 |
 |---|---|---|
-| MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.0.4（`npx -y pubmed_mcp_server2@2.0.4` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
+| MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.1.0（`npx -y pubmed_mcp_server2@2.1.0` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
 | スキル | `pubmed-search` | ふだんの PubMed 検索。MeSH と自由語で検索式を組み、件数を確認し、抄録を読んで、出典リンク付きで答える |
 | スキル | `pubmed-key-papers` | CQ に対して影響度の高い論文を5〜10本選ぶ。検索結果を iCite の指標で順位付けし、CQ への適合と研究デザインを確認して、参考文献と被引用を前後にたどる |
 | スキル | `pubmed-reference-verifier` | 原稿の本文中引用と参考文献リストの対応をチェックし、各文献を PubMed で照合する（実在・著者・年・タイトル・雑誌・DOI） |
 | スキル | `pubmed-literature-review` | PubMed を系統的に検索してスクリーニングし、抄録や PMC 全文から数値（N数・アウトカム・効果量・95%CI・P値）を抜き出して Excel・CSV・スライドにまとめる。メタ解析用データの収集にも対応 |
 | エージェント | `literature-scout` | 文献の下調べを別の文脈で行い、要約と出典リストを返す |
+| 任意のプラグイン | [`unpaywall`](https://github.com/masa-med-ai/unpaywall-skill) | DOI から合法的な OA 版を探し、PDF も保存できる。`pubmed` とは別に[インストール](#任意unpaywall-を追加する)する |
 
 スキルは、依頼内容に合えば自動で使われます。`/pubmed:pubmed-search` のように明示的に呼び出すこともできます。
-
-### 任意：`unpaywall` プラグイン
-
-同じ marketplace には、DOI から合法的なオープンアクセス版を探し、PDF も保存できる別プラグイン [`unpaywall`](https://github.com/masa-med-ai/unpaywall-skill) もあります。入れておくと、`pubmed-literature-review` が PMC にない論文で使えます。
-
-```
-/plugin install unpaywall@pubmed-review-tools
-```
-
-Python 3.8 以上と、`UNPAYWALL_EMAIL` に設定した本人のメールアドレスが必要です。スキルを `~/.claude/skills/unpaywall` にコピーしている場合は、似たスキルが2つ反応しないよう、そのコピーを削除してください。
 
 ## 動作環境
 
 - **Claude Code**（後述の1行インストールは 2.1.275 以降）
 - **Node.js 18 以上**：`npx` で MCP サーバーを起動するために使います。`node -v` で確認し、未導入なら <https://nodejs.org/> からインストールしてください。
+- **Python 3.8 以上**：`pubmed-key-papers` と `unpaywall` が使います。追加パッケージは不要です。
 - `eutils.ncbi.nlm.nih.gov`、`pmc.ncbi.nlm.nih.gov`、`icite.od.nih.gov` へのインターネット接続
 - *（任意）* NCBI APIキー：NCBI のレート制限が毎秒3回から10回に上がります
+- *（`unpaywall` を使う場合）* `UNPAYWALL_EMAIL` に設定した本人のメールアドレスと、`api.unpaywall.org` へのインターネット接続
 - *（任意・`.docx` の原稿を扱う場合）* [pandoc](https://pandoc.org/)：`pubmed-reference-verifier` が Word ファイルを読むのに使います
 
 ## インストール
@@ -94,6 +92,32 @@ Claude Code 2.1.275 以降なら、1行でもインストールできます。
 
 `pubmed` が **connected** と表示されれば完了です。
 初回だけ、`npx` がサーバーをダウンロードするため10〜20秒ほどかかります。2回目以降はキャッシュを使います。
+
+### 任意：unpaywall を追加する
+
+PMC にない論文の OA 版も探したい場合は、`unpaywall` も入れます。
+
+```
+/plugin install unpaywall@pubmed-review-tools
+```
+
+Unpaywall は本人のメールアドレスで利用者を識別します。`example.com` などのダミーは使えません。`UNPAYWALL_EMAIL` に設定し、Claude Code を再起動します。
+
+macOS / Linux（zsh）の場合：
+
+```bash
+echo 'export UNPAYWALL_EMAIL="本人のアドレス"' >> ~/.zshrc
+```
+
+bash の場合は `~/.bashrc` に書きます。
+
+Windows（PowerShell）の場合：
+
+```powershell
+setx UNPAYWALL_EMAIL "本人のアドレス"
+```
+
+スキルを `~/.claude/skills/unpaywall` にコピーしている場合は、似たスキルが2つ反応しないよう、そのコピーを削除してください。
 
 ## NCBI APIキー（任意・推奨）
 
@@ -146,6 +170,16 @@ Claude は次の順に進めます。
 - 「もっと」「新しいものだけ」「RCT だけ」と頼むと、検索を絞り込みます。
 - 「PMID 12345678 に似た論文」「この論文を引用している論文」と頼むと、良い論文を起点に広げられます。
 - 「RIS で出力して」と頼むと、EndNote・Zotero・Mendeley に取り込めるファイルを作ります。
+
+### pubmed-key-papers：CQ の鍵論文を探す
+
+すべてを集めるのではなく、見落としたくない論文を知りたいときに使います。
+
+- 「CADe で腺腫検出は改善するか、鍵論文を探して」
+
+被引用の指標を見る前に CQ への適合を判定し、適合、研究デザイン、RCR（Relative Citation Ratio）の順に比べて、影響度の高い候補を返します。RCR が確定していない新しい論文は落とさず別枠で示し、被引用が多くても CQ に合わない論文は理由を添えて示します。被引用の多さは研究の質を保証しないので、結果を「最良のエビデンス」とは呼びません。
+
+`pubmed-search` に同梱のスクリプトから NCBI と iCite に接続します。`pubmed-literature-review` は鍵論文を検索式の確認に使えますが、採否の判断には使いません。
 
 ### pubmed-reference-verifier：原稿の参考文献チェック
 
@@ -215,15 +249,24 @@ Vancouver 形式（`[1]`、`[1-3]`）、Pandoc 形式（`[@key]`）、本文に�
 - このスキルの結果は「PubMed に基づくラピッドレビュー」「エビデンスマップ」「レビューのデータ収集段階」などと表現し、データベースが1つだけである限界を明記してください。成果物でもスキルがそのことを促します。
 - メタ解析用のデータは集めますが、統合効果量・I²・forest plot は計算しません。それらは R（`meta`、`metafor`）や RevMan などで行ってください。
 
-### pubmed-key-papers
+### unpaywall：OA 版を探す（任意）
 
-すべてを集めるのではなく、見落としたくない論文を知りたいときに使います。
+[`unpaywall` を追加する](#任意unpaywall-を追加する)と使えます。論文を探すためのものではなく、読みたい論文が決まっているときに使います。
 
-- 「CADe で腺腫検出は改善するか、鍵論文を探して」
+- 「DOI 10.xxxx/xxxxx の無料版はある？」
+- 「この論文の OA 版を探して、PDF を保存して」
 
-被引用の指標を見る前に CQ への適合を判定し、適合、研究デザイン、RCR（Relative Citation Ratio）の順に比べて、影響度の高い候補を返します。RCR が確定していない新しい論文は落とさず別枠で示し、被引用が多くても CQ に合わない論文は理由を添えて示します。被引用の多さは研究の質を保証しないので、結果を「最良のエビデンス」とは呼びません。
+結果には OA の種類、版、ライセンス、リンクが出ます。PDF は頼んだときだけ保存します。
 
-Python 3 が必要で、`pubmed-search` に同梱のスクリプトから NCBI と iCite に接続します。`pubmed-literature-review` は鍵論文を検索式の確認に使えますが、採否の判断には使いません。
+| 版 | 意味 |
+|---|---|
+| `publishedVersion` | 出版版 |
+| `acceptedVersion` | 査読後の著者最終稿 |
+| `submittedVersion` | 査読前の原稿 |
+
+`pubmed-literature-review` の全文モードでも使えます。最初に使うかどうかを確認し、PMC にない論文を探して、使った版を台帳と成果物に記録します。数値の確認には出版版が望ましいので、ほかの版を使ったときは成果物にそのことを書きます。
+
+合法的に公開された版を探すだけで、ペイウォールの回避はしません。
 
 ### literature-scout エージェント
 
@@ -250,7 +293,7 @@ Python 3 が必要で、`pubmed-search` に同梱のスクリプトから NCBI �
 | `fetch_batch` | 複数 PMID の抄録、MeSH、出版タイプ |
 | `get_full_text` | PubMed Central の全文を章ごとに取得（PMC 収録論文のみ） |
 | `find_similar_articles` | ある PMID に関連する論文 |
-| `get_citation_counts` | 被引用数（iCite）、または PubMed 上でその論文を引用している PMID |
+| `get_citation_counts` | iCite の被引用数と RCR（参考文献の PMID も取得可）、または PubMed 上でその論文を引用している PMID |
 | `convert_ids` | PMID・PMCID・DOI の相互変換 |
 | `export_to_ris` | 文献管理ソフト用の RIS ファイル |
 | `batch_process` | 同じ PMID の集合に上記の処理をまとめて実行 |
@@ -299,12 +342,19 @@ Claude が回答に論文を使うときは、第一著者・雑誌名・発刊�
 claude plugin update pubmed@pubmed-review-tools
 ```
 
+`unpaywall` を入れている場合は、同じように更新します。
+
+```bash
+claude plugin update unpaywall@pubmed-review-tools
+```
+
 最後に Claude Code を再起動します。
 
 アンインストール：
 
 ```
 /plugin uninstall pubmed@pubmed-review-tools
+/plugin uninstall unpaywall@pubmed-review-tools
 ```
 
 **0.1.x からの移行**：0.1.x のプラグインは `pubmed-systematic-review` という名前でした。0.2.0 で `pubmed` に変わったため、入れ直しが必要です。
@@ -327,6 +377,9 @@ claude plugin update pubmed@pubmed-review-tools
 | PubMed のツールが表示されない | `/plugin` でプラグインが有効か確認し、Claude Code を再起動します。 |
 | スキルが自動で使われない | `/pubmed:pubmed-search` のように明示的に呼ぶか、依頼文に「PubMed」と入れます。 |
 | 似たスキルが2つ反応する | 古いスキルのコピーを削除します（[0.1.x からの移行](#更新アンインストール01x-からの移行)を参照）。 |
+| `pubmed-key-papers` や `unpaywall` が実行できない | `python3 --version` で 3.8 以上か確認します。 |
+| `unpaywall` が `SETUP_REQUIRED` で止まる | [`UNPAYWALL_EMAIL`](#任意unpaywall-を追加する) を設定し、Claude Code を再起動します。 |
+| `unpaywall` の PDF 保存が失敗する | 出版社が自動取得を拒否していることが多いです。表示されたリンクをブラウザで開いてください。 |
 | verifier が `.docx` を読めない | [pandoc](https://pandoc.org/) をインストールするか、原稿を Markdown で保存します。 |
 
 ## MCP サーバーだけを使う場合

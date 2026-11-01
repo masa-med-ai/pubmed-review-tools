@@ -5,7 +5,7 @@ PubMed を Claude Code から使うための検索ツール群です。ローカ
 
 | Component / 種類 | Name / 名前 |
 |---|---|
-| MCP server | `pubmed` — [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2)@2.0.4 via `npx` |
+| MCP server | `pubmed` — [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2)@2.1.0 via `npx` |
 | Skill | `pubmed-search` — everyday searching with hyperlinked citations / 出典リンク付きの文献検索 |
 | Skill | `pubmed-key-papers` — finds high-impact papers for a clinical question / CQ に対する影響度の高い鍵論文の選定 |
 | Skill | `pubmed-reference-verifier` — checks a manuscript's references against PubMed / 原稿の参考文献チェック |
