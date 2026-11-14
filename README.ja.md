@@ -49,7 +49,7 @@ Claude Code 用のプラグイン・マーケットプレイスです。PubMed �
 
 | 種類 | 名前 | 内容 |
 |---|---|---|
-| MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.1.0（`npx -y pubmed_mcp_server2@2.1.0` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
+| MCP サーバー | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.1.1（`npx -y pubmed_mcp_server2@2.1.1` で起動）。PubMed・PubMed Central（PMC）・iCite を使う10ツールを提供 |
 | スキル | `pubmed-search` | ふだんの PubMed 検索。MeSH と自由語で検索式を組み、件数を確認し、抄録を読んで、出典リンク付きで答える |
 | スキル | `pubmed-key-papers` | CQ に対して影響度の高い論文を5〜10本選ぶ。検索結果を iCite の指標で順位付けし、CQ への適合と研究デザインを確認して、参考文献と被引用を前後にたどる |
 | スキル | `pubmed-reference-verifier` | 原稿の本文中引用と参考文献リストの対応をチェックし、各文献を PubMed で照合する（実在・著者・年・タイトル・雑誌・DOI） |
@@ -145,6 +145,8 @@ setx NCBI_API_KEY "あなたのキー"
 設定後は、新しいターミナルを開いてから Claude Code を起動します。
 
 プラグインは環境変数からキーを読み込みます（`.mcp.json` の `"NCBI_API_KEY": "${NCBI_API_KEY:-}"`）。プラグインにキーが保存されることはありません。キーを git にコミットしたり、他人と共有したりしないでください。
+
+ホストによっては（Codex のデスクトップアプリなど）、この `${NCBI_API_KEY:-}` を展開せず、文字列のままサーバーへ渡します。サーバーはその値を無視し、キーなし（毎秒約3リクエスト）で動きます。
 
 ## 使い方
 

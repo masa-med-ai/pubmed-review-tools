@@ -45,7 +45,7 @@ With `unpaywall`, Claude can also look up legal open-access copies by DOI and sa
 
 | Component | Name | What it does |
 |---|---|---|
-| MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.1.0, launched with `npx -y pubmed_mcp_server2@2.1.0`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
+| MCP server | `pubmed` | [`pubmed_mcp_server2`](https://github.com/masa-med-ai/pubmed_mcp_server2) v2.1.1, launched with `npx -y pubmed_mcp_server2@2.1.1`. Provides 10 tools for PubMed, PubMed Central (PMC), and iCite. |
 | Skill | `pubmed-search` | Everyday PubMed searching: builds MeSH + free-text queries, checks hit counts, reads abstracts, and answers with hyperlinked citations. |
 | Skill | `pubmed-key-papers` | Finds the 5–10 most influential papers for a clinical question: ranks search results with iCite metrics, checks fit to the question and study design, and follows references and citing papers in both directions. |
 | Skill | `pubmed-reference-verifier` | Checks that in-text citations match the reference list, and verifies each reference against PubMed (existence, authors, year, title, journal, DOI). |
@@ -141,6 +141,8 @@ setx NCBI_API_KEY "your-key"
 Open a new terminal before starting Claude Code.
 
 The plugin reads the key from the environment (`"NCBI_API_KEY": "${NCBI_API_KEY:-}"` in `.mcp.json`). The key is never stored in the plugin. Don't commit it to git or share it.
+
+Some hosts (for example, the Codex desktop app) pass that `${NCBI_API_KEY:-}` text to the server without expanding it. The server ignores such a value and runs without a key (about 3 requests/sec).
 
 ## Usage
 

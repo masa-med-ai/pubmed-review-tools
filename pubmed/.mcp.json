@@ -2,7 +2,7 @@
   "mcpServers": {
     "pubmed": {
       "command": "npx",
-      "args": ["-y", "pubmed_mcp_server2@2.1.0"],
+      "args": ["-y", "pubmed_mcp_server2@2.1.1"],
       "env": {
         "NCBI_API_KEY": "${NCBI_API_KEY:-}"
       }
