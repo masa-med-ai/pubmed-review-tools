@@ -29,8 +29,8 @@
     {
       "name": "unpaywall",
       "source": {
-        "source": "github",
-        "repo": "masa-med-ai/unpaywall-skill"
+        "source": "url",
+        "url": "https://github.com/masa-med-ai/unpaywall-skill.git"
       },
       "description": "Optional: find legal open-access copies of a paper by DOI with the Unpaywall API, and optionally save the PDF. Sends the DOI and your UNPAYWALL_EMAIL to Unpaywall.",
       "author": {
